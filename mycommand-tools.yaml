@@ -1,30 +1,30 @@
 tools:
   - name: "list_files"
-    description: "Lista los archivos en un directorio específico"
+    description: "Lists files in a specific directory"
     command: "ls"
     path: "/"
     accepts_args: true
     
   - name: "get_date"
-    description: "Obtiene la fecha y hora actual del sistema"
+    description: "Gets the current system date and time"
     command: "date"
     path: "/"
     accepts_args: false
     
   - name: "disk_usage"
-    description: "Muestra el uso del disco en el sistema"
+    description: "Shows disk usage in the system"
     command: "df"
     path: "/"
     accepts_args: true
     
   - name: "process_list"
-    description: "Lista los procesos en ejecución"
+    description: "Lists running processes"
     command: "ps"
     path: "/"
     accepts_args: true
     
   - name: "network_info"
-    description: "Muestra información de la configuración de red"
+    description: "Shows network configuration information"
     command: "ip"
     path: "/"
     accepts_args: true

@@ -1,80 +1,80 @@
-# Archivo de configuración de herramientas para MyCommandMCP
-# Este archivo define las herramientas que estarán disponibles como MCP tools
+# Tool configuration file for MyCommandMCP
+# This file defines the tools that will be available as MCP tools
 
 tools:
-  # Herramientas de sistema básicas
+  # Basic system tools
   - name: "list_files"
-    description: "Lista los archivos y directorios en una ubicación específica. Acepta argumentos como -la, -lh, etc."
+    description: "Lists files and directories in a specific location. Accepts arguments like -la, -lh, etc."
     command: "ls"
     path: "/"
     accepts_args: true
     
   - name: "get_date"
-    description: "Obtiene la fecha y hora actual del sistema"
+    description: "Gets the current system date and time"
     command: "date"
     path: "/"
     accepts_args: false
     
   - name: "current_directory"
-    description: "Muestra el directorio de trabajo actual"
+    description: "Shows the current working directory"
     command: "pwd"
     path: "/"
     accepts_args: false
     
-  # Herramientas de información del sistema
+  # System information tools
   - name: "disk_usage"
-    description: "Muestra el uso del disco en el sistema. Acepta argumentos como -h para formato legible"
+    description: "Shows disk usage in the system. Accepts arguments like -h for readable format"
     command: "df"
     path: "/"
     accepts_args: true
     
   - name: "memory_info"
-    description: "Muestra información sobre el uso de memoria del sistema"
+    description: "Shows information about system memory usage"
     command: "free"
     path: "/"
     accepts_args: true
     
   - name: "process_list"
-    description: "Lista los procesos en ejecución. Acepta argumentos como aux, -ef, etc."
+    description: "Lists running processes. Accepts arguments like aux, -ef, etc."
     command: "ps"
     path: "/"
     accepts_args: true
     
-  # Herramientas de red
+  # Network tools
   - name: "network_interfaces"
-    description: "Muestra información de las interfaces de red. Acepta argumentos como addr show, link show, etc."
+    description: "Shows network interface information. Accepts arguments like addr show, link show, etc."
     command: "ip"
     path: "/"
     accepts_args: true
     
   - name: "ping_host"
-    description: "Hace ping a un host específico. Requiere argumentos como -c 4 hostname"
+    description: "Pings a specific host. Requires arguments like -c 4 hostname"
     command: "ping"
     path: "/"
     accepts_args: true
     
-  # Herramientas de archivos
+  # File tools
   - name: "file_content"
-    description: "Muestra el contenido de un archivo. Requiere el nombre del archivo como argumento"
+    description: "Shows the content of a file. Requires the filename as argument"
     command: "cat"
     path: "/"
     accepts_args: true
     
   - name: "file_info"
-    description: "Muestra información detallada sobre archivos o directorios"
+    description: "Shows detailed information about files or directories"
     command: "stat"
     path: "/"
     accepts_args: true
     
-  # Herramientas de búsqueda
+  # Search tools
   - name: "find_files"
-    description: "Busca archivos en el sistema. Acepta argumentos como . -name '*.txt' -type f"
+    description: "Searches for files in the system. Accepts arguments like . -name '*.txt' -type f"
     command: "find"
     path: "/"
     accepts_args: true
     
   - name: "grep_text"
-    description: "Busca texto en archivos. Acepta argumentos como 'patrón' archivo"
+    description: "Searches for text in files. Accepts arguments like 'pattern' file"
     command: "grep"
     path: "/"
     accepts_args: true

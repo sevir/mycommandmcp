@@ -1,109 +1,109 @@
 # MyCommandMCP
 
-Un servidor MCP (Model Context Protocol) escrito en Rust que permite ejecutar comandos de sistema como herramientas MCP.
+An MCP (Model Context Protocol) server written in Rust that allows executing system commands as MCP tools.
 
-## Características
+## Features
 
-- Lee la configuración de herramientas desde un archivo YAML personalizable
-- Soporte para especificar el archivo de configuración mediante parámetro `--config`
-- Ejecuta comandos de sistema de forma segura
-- Devuelve resultados en formato JSON con código de estado, salida y errores
-- Compatible con el protocolo MCP 2024-11-05
+- Reads tool configuration from a customizable YAML file
+- Support for specifying configuration file via `--config` parameter
+- Executes system commands safely
+- Returns results in JSON format with status code, output, and errors
+- Compatible with MCP protocol 2024-11-05
 
-## Instalación y uso
+## Installation and Usage
 
-1. Asegúrate de tener Rust instalado
-2. Clona o copia este proyecto
-3. Configura tu archivo de herramientas YAML
-4. Compila y ejecuta:
+1. Make sure you have Rust installed
+2. Clone or copy this project
+3. Configure your YAML tools file
+4. Build and run:
 
 ```bash
 cargo build --release
 ```
 
-### Ejecutar el servidor
+### Running the server
 
-#### Con archivo de configuración por defecto
+#### With default configuration file
 ```bash
 ./target/release/mycommandmcp
 ```
 
-#### Con archivo de configuración personalizado
+#### With custom configuration file
 ```bash
-./target/release/mycommandmcp --config mi-configuracion.yaml
+./target/release/mycommandmcp --config my-configuration.yaml
 ```
 
-#### Ver ayuda
+#### View help
 ```bash
 ./target/release/mycommandmcp --help
 ```
 
-## Configuración
+## Configuration
 
-El servidor lee la configuración desde un archivo YAML. Por defecto busca `mycommand-tools.yaml` en el directorio actual, pero puedes especificar otro archivo con el parámetro `--config`.
+The server reads configuration from a YAML file. By default it looks for `mycommand-tools.yaml` in the current directory, but you can specify another file with the `--config` parameter.
 
-### Estructura del archivo de configuración
+### Configuration file structure
 
 ```yaml
 tools:
-  - name: "nombre_herramienta"
-    description: "Descripción de la herramienta para MCP"
-    command: "comando_sistema"
-    path: "/ruta/donde/ejecutar"
+  - name: "tool_name"
+    description: "Tool description for MCP"
+    command: "system_command"
+    path: "/path/where/to/execute"
     accepts_args: true/false
 ```
 
-### Ejemplo de configuración
+### Configuration example
 
 ```yaml
 tools:
   - name: "list_files"
-    description: "Lista los archivos en un directorio específico"
+    description: "Lists files in a specific directory"
     command: "ls"
     path: "/"
     accepts_args: true
     
   - name: "get_date"
-    description: "Obtiene la fecha y hora actual del sistema"
+    description: "Gets the current system date and time"
     command: "date"
     path: "/"
     accepts_args: false
 ```
 
-## Archivos de configuración incluidos
+## Included configuration files
 
-- `mycommand-tools.yaml`: Configuración básica con 5 herramientas
-- `mycommand-tools-extended.yaml`: Configuración extendida con 12 herramientas
+- `mycommand-tools.yaml`: Basic configuration with 5 tools
+- `mycommand-tools-extended.yaml`: Extended configuration with 12 tools
 
-## Protocolo MCP
+## MCP Protocol
 
-El servidor implementa los siguientes métodos MCP:
+The server implements the following MCP methods:
 
-- `initialize`: Inicializa el servidor y devuelve las capacidades
-- `tools/list`: Lista todas las herramientas disponibles
-- `tools/call`: Ejecuta una herramienta específica
+- `initialize`: Initializes the server and returns capabilities
+- `tools/list`: Lists all available tools
+- `tools/call`: Executes a specific tool
 
-### Formato de respuesta
+### Response format
 
-Cuando se ejecuta una herramienta, el servidor devuelve un JSON con:
+When a tool is executed, the server returns a JSON with:
 
 ```json
 {
   "status_code": 0,
-  "output": "salida del comando",
-  "error": "errores si los hay"
+  "output": "command output",
+  "error": "errors if any"
 }
 ```
 
-## Seguridad
+## Security
 
-**IMPORTANTE**: Este servidor ejecuta comandos de sistema directamente. Asegúrate de:
+**IMPORTANT**: This server executes system commands directly. Make sure to:
 
-- Usar solo en entornos controlados
-- Configurar herramientas con comandos seguros
-- No exponer el servidor a redes no confiables
-- Revisar cuidadosamente la configuración YAML
+- Use only in controlled environments
+- Configure tools with safe commands
+- Do not expose the server to untrusted networks
+- Carefully review the YAML configuration
 
-## Licencia
+## License
 
 MIT License
