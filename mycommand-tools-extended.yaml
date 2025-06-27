@@ -1,0 +1,80 @@
+# Archivo de configuración de herramientas para MyCommandMCP
+# Este archivo define las herramientas que estarán disponibles como MCP tools
+
+tools:
+  # Herramientas de sistema básicas
+  - name: "list_files"
+    description: "Lista los archivos y directorios en una ubicación específica. Acepta argumentos como -la, -lh, etc."
+    command: "ls"
+    path: "/"
+    accepts_args: true
+    
+  - name: "get_date"
+    description: "Obtiene la fecha y hora actual del sistema"
+    command: "date"
+    path: "/"
+    accepts_args: false
+    
+  - name: "current_directory"
+    description: "Muestra el directorio de trabajo actual"
+    command: "pwd"
+    path: "/"
+    accepts_args: false
+    
+  # Herramientas de información del sistema
+  - name: "disk_usage"
+    description: "Muestra el uso del disco en el sistema. Acepta argumentos como -h para formato legible"
+    command: "df"
+    path: "/"
+    accepts_args: true
+    
+  - name: "memory_info"
+    description: "Muestra información sobre el uso de memoria del sistema"
+    command: "free"
+    path: "/"
+    accepts_args: true
+    
+  - name: "process_list"
+    description: "Lista los procesos en ejecución. Acepta argumentos como aux, -ef, etc."
+    command: "ps"
+    path: "/"
+    accepts_args: true
+    
+  # Herramientas de red
+  - name: "network_interfaces"
+    description: "Muestra información de las interfaces de red. Acepta argumentos como addr show, link show, etc."
+    command: "ip"
+    path: "/"
+    accepts_args: true
+    
+  - name: "ping_host"
+    description: "Hace ping a un host específico. Requiere argumentos como -c 4 hostname"
+    command: "ping"
+    path: "/"
+    accepts_args: true
+    
+  # Herramientas de archivos
+  - name: "file_content"
+    description: "Muestra el contenido de un archivo. Requiere el nombre del archivo como argumento"
+    command: "cat"
+    path: "/"
+    accepts_args: true
+    
+  - name: "file_info"
+    description: "Muestra información detallada sobre archivos o directorios"
+    command: "stat"
+    path: "/"
+    accepts_args: true
+    
+  # Herramientas de búsqueda
+  - name: "find_files"
+    description: "Busca archivos en el sistema. Acepta argumentos como . -name '*.txt' -type f"
+    command: "find"
+    path: "/"
+    accepts_args: true
+    
+  - name: "grep_text"
+    description: "Busca texto en archivos. Acepta argumentos como 'patrón' archivo"
+    command: "grep"
+    path: "/"
+    accepts_args: true
