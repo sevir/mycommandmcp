@@ -1,2 +1,0 @@
-467df19ecdb2322ca2db88d13e60fedd4beb41dde07bb8f02f637fe3b36e2737  mycommandmcp_0.1.0_windows_amd64.exe
-aa87b7f8b6fe2351ae2db2b188dabbebaa173d9acdc6cacc688b90856bb0452b  mycommandmcp_0.1.0_windows_amd64.zip

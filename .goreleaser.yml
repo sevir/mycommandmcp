@@ -19,19 +19,19 @@ before:
     - cargo update
     # Setup cross-compilation environment
     - ./setup-cross-compilation.sh
+    # Create dist directory structure
+    - mkdir -p dist/
+    # Copy binaries to dist with proper naming
     # Build for Linux x86_64
     - cargo build --release --target x86_64-unknown-linux-gnu
+    - cp target/x86_64-unknown-linux-gnu/release/mycommandmcp dist/mycommandmcp_linux_amd64 || echo "Linux binary not found"
     # Build for Windows x86_64 using specialized script
     - ./build-windows.sh
+    - cp target/x86_64-pc-windows-gnu/release/mycommandmcp.exe dist/mycommandmcp_windows_amd64.exe || echo "Windows binary not found"
     # Build for macOS x86_64 (skip if cross-compilation tools not available)
     - bash -c "cargo build --release --target x86_64-apple-darwin || echo 'macOS Intel build skipped - not available on this platform'"
     # Build for macOS ARM64 (skip if cross-compilation tools not available)
     - bash -c "cargo build --release --target aarch64-apple-darwin || echo 'macOS ARM build skipped - not available on this platform'"
-    # Create dist directory structure
-    - mkdir -p dist/
-    # Copy binaries to dist with proper naming
-    - cp target/x86_64-unknown-linux-gnu/release/mycommandmcp dist/mycommandmcp_linux_amd64 || echo "Linux binary not found"
-    - cp target/x86_64-pc-windows-gnu/release/mycommandmcp.exe dist/mycommandmcp_windows_amd64.exe || echo "Windows binary not found"
     - cp target/x86_64-apple-darwin/release/mycommandmcp dist/mycommandmcp_darwin_amd64 || echo "macOS Intel binary not found"
     - cp target/aarch64-apple-darwin/release/mycommandmcp dist/mycommandmcp_darwin_arm64 || echo "macOS ARM binary not found"
 
