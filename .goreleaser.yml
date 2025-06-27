@@ -29,11 +29,11 @@ before:
     - ./build-windows.sh
     - cp target/x86_64-pc-windows-gnu/release/mycommandmcp.exe dist/mycommandmcp_windows_amd64.exe || echo "Windows binary not found"
     # Build for macOS x86_64 (skip if cross-compilation tools not available)
-    - bash -c "cargo build --release --target x86_64-apple-darwin || echo 'macOS Intel build skipped - not available on this platform'"
+    #- bash -c "cargo build --release --target x86_64-apple-darwin || echo 'macOS Intel build skipped - not available on this platform'"
     # Build for macOS ARM64 (skip if cross-compilation tools not available)
-    - bash -c "cargo build --release --target aarch64-apple-darwin || echo 'macOS ARM build skipped - not available on this platform'"
-    - cp target/x86_64-apple-darwin/release/mycommandmcp dist/mycommandmcp_darwin_amd64 || echo "macOS Intel binary not found"
-    - cp target/aarch64-apple-darwin/release/mycommandmcp dist/mycommandmcp_darwin_arm64 || echo "macOS ARM binary not found"
+    #- bash -c "cargo build --release --target aarch64-apple-darwin || echo 'macOS ARM build skipped - not available on this platform'"
+    #- cp target/x86_64-apple-darwin/release/mycommandmcp dist/mycommandmcp_darwin_amd64 || echo "macOS Intel binary not found"
+    #- cp target/aarch64-apple-darwin/release/mycommandmcp dist/mycommandmcp_darwin_arm64 || echo "macOS ARM binary not found"
 
 # Since we're using Rust, we disable Go builds entirely
 builds:
