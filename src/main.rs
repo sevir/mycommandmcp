@@ -1,10 +1,21 @@
 use anyhow::{Context, Result};
+use clap::Parser;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
 use std::process::Command;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+
+#[derive(Parser)]
+#[command(name = "mycommandmcp")]
+#[command(about = "A MCP server that executes system commands from YAML configuration")]
+#[command(version = "0.1.0")]
+struct Args {
+    /// Path to the YAML configuration file
+    #[arg(short, long, default_value = "mycommand-tools.yaml")]
+    config: String,
+}
 
 #[derive(Debug, Deserialize, Clone)]
 struct Tool {
@@ -29,6 +40,7 @@ struct CommandResult {
 
 #[derive(Debug, Deserialize)]
 struct MCPRequest {
+    #[allow(dead_code)]
     jsonrpc: String,
     id: Option<Value>,
     method: String,
@@ -54,9 +66,9 @@ struct MCPServer {
 }
 
 impl MCPServer {
-    fn new() -> Result<Self> {
-        let config_content = fs::read_to_string("mycommand-tools.yaml")
-            .context("Failed to read mycommand-tools.yaml")?;
+    fn new(config_path: &str) -> Result<Self> {
+        let config_content = fs::read_to_string(config_path)
+            .context(format!("Failed to read config file: {}", config_path))?;
         
         let config: ToolsConfig = serde_yaml::from_str(&config_content)
             .context("Failed to parse YAML configuration")?;
@@ -191,9 +203,12 @@ impl MCPServer {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let server = MCPServer::new()?;
+    let args = Args::parse();
+    
+    let server = MCPServer::new(&args.config)?;
     
     eprintln!("MyCommandMCP Server starting...");
+    eprintln!("Config file: {}", args.config);
     eprintln!("Loaded {} tools", server.tools.len());
     
     let stdin = tokio::io::stdin();

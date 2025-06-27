@@ -4,14 +4,45 @@ Un servidor MCP (Model Context Protocol) escrito en Rust que permite ejecutar co
 
 ## Características
 
-- Lee la configuración de herramientas desde un archivo YAML
+- Lee la configuración de herramientas desde un archivo YAML personalizable
+- Soporte para especificar el archivo de configuración mediante parámetro `--config`
 - Ejecuta comandos de sistema de forma segura
 - Devuelve resultados en formato JSON con código de estado, salida y errores
 - Compatible con el protocolo MCP 2024-11-05
 
+## Instalación y uso
+
+1. Asegúrate de tener Rust instalado
+2. Clona o copia este proyecto
+3. Configura tu archivo de herramientas YAML
+4. Compila y ejecuta:
+
+```bash
+cargo build --release
+```
+
+### Ejecutar el servidor
+
+#### Con archivo de configuración por defecto
+```bash
+./target/release/mycommandmcp
+```
+
+#### Con archivo de configuración personalizado
+```bash
+./target/release/mycommandmcp --config mi-configuracion.yaml
+```
+
+#### Ver ayuda
+```bash
+./target/release/mycommandmcp --help
+```
+
 ## Configuración
 
-El servidor lee la configuración desde el archivo `mycommand-tools.yaml` en el directorio actual. La estructura del archivo es:
+El servidor lee la configuración desde un archivo YAML. Por defecto busca `mycommand-tools.yaml` en el directorio actual, pero puedes especificar otro archivo con el parámetro `--config`.
+
+### Estructura del archivo de configuración
 
 ```yaml
 tools:
@@ -39,17 +70,10 @@ tools:
     accepts_args: false
 ```
 
-## Instalación y uso
+## Archivos de configuración incluidos
 
-1. Asegúrate de tener Rust instalado
-2. Clona o copia este proyecto
-3. Configura tu archivo `mycommand-tools.yaml`
-4. Compila y ejecuta:
-
-```bash
-cargo build --release
-cargo run
-```
+- `mycommand-tools.yaml`: Configuración básica con 5 herramientas
+- `mycommand-tools-extended.yaml`: Configuración extendida con 12 herramientas
 
 ## Protocolo MCP
 
