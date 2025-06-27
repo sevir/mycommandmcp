@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::json;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
@@ -19,7 +19,7 @@ struct Args {
 }
 
 #[derive(Debug, Deserialize, Clone)]
-struct Tool {
+struct ToolConfig {
     name: String,
     description: String,
     command: String,
@@ -29,7 +29,7 @@ struct Tool {
 
 #[derive(Debug, Deserialize)]
 struct ToolsConfig {
-    tools: Vec<Tool>,
+    tools: Vec<ToolConfig>,
 }
 
 #[derive(Debug, Serialize)]
@@ -39,34 +39,12 @@ struct CommandResult {
     error: String,
 }
 
-#[derive(Debug, Deserialize)]
-struct MCPRequest {
-    #[allow(dead_code)]
-    jsonrpc: String,
-    id: Option<Value>,
-    method: String,
-    params: Option<Value>,
+#[derive(Clone)]
+struct MyCommandMCPServer {
+    tools: HashMap<String, ToolConfig>,
 }
 
-#[derive(Debug, Serialize)]
-struct MCPResponse {
-    jsonrpc: String,
-    id: Option<Value>,
-    result: Option<Value>,
-    error: Option<MCPError>,
-}
-
-#[derive(Debug, Serialize)]
-struct MCPError {
-    code: i32,
-    message: String,
-}
-
-struct MCPServer {
-    tools: HashMap<String, Tool>,
-}
-
-impl MCPServer {
+impl MyCommandMCPServer {
     fn new(config_path: &str) -> Result<Self> {
         let config_content = fs::read_to_string(config_path)
             .context(format!("Failed to read config file: {}", config_path))?;
@@ -79,7 +57,7 @@ impl MCPServer {
             tools.insert(tool.name.clone(), tool);
         }
 
-        Ok(MCPServer { tools })
+        Ok(MyCommandMCPServer { tools })
     }
 
     async fn execute_command(&self, tool_name: &str, args: Option<&str>) -> Result<CommandResult> {
@@ -116,168 +94,137 @@ impl MCPServer {
         })
     }
 
-    fn handle_list_tools(&self) -> Value {
-        let tools: Vec<Value> = self
-            .tools
-            .values()
-            .map(|tool| {
-                serde_json::json!({
-                    "name": tool.name,
-                    "description": tool.description,
+    async fn handle_request(&self, message: &str) -> Result<String> {
+        let request: serde_json::Value = serde_json::from_str(message)?;
+
+        let method = request["method"].as_str().unwrap_or("");
+        let id = request.get("id").cloned();
+
+        let result = match method {
+            "initialize" => {
+                json!({
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {
+                        "tools": {}
+                    },
+                    "serverInfo": {
+                        "name": "mycommandmcp",
+                        "version": "0.1.0"
+                    }
+                })
+            }
+            "initialized" => json!({}),
+            "tools/list" => {
+                let mut tools = Vec::new();
+
+                // Add a general execute_tool
+                tools.push(json!({
+                    "name": "execute_tool",
+                    "description": format!(
+                        "Execute any configured system command with optional arguments. Available tools: {}",
+                        self.tools.keys().cloned().collect::<Vec<_>>().join(", ")
+                    ),
                     "inputSchema": {
                         "type": "object",
                         "properties": {
                             "tool_name": {
                                 "type": "string",
-                                "description": format!("The tool name to execute: {}", tool.name)
+                                "description": format!("Name of the tool to execute. Available tools: {}",
+                                    self.tools.keys().cloned().collect::<Vec<_>>().join(", "))
                             },
                             "args": {
                                 "type": "string",
-                                "description": "Arguments for the command (optional)"
+                                "description": "Arguments to pass to the command (optional)"
                             }
                         },
                         "required": ["tool_name"]
                     }
-                })
-            })
-            .collect();
+                }));
 
-        // Add a general execute_tool that can run any configured tool
-        let mut all_tools = vec![serde_json::json!({
-            "name": "execute_tool",
-            "description": "Execute any configured system command with optional arguments",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "tool_name": {
-                        "type": "string",
-                        "description": format!("Name of the tool to execute. Available tools: {}",
-                        self.tools.keys().map(|k| k.as_str()).collect::<Vec<_>>().join(", "))
-                    },
-                    "args": {
-                        "type": "string",
-                        "description": "Arguments to pass to the command (optional)"
-                    }
-                },
-                "required": ["tool_name"]
-            }
-        })];
-
-        all_tools.extend(tools);
-
-        serde_json::json!({
-            "tools": all_tools
-        })
-    }
-
-    async fn handle_call_tool(&self, params: &Value) -> Result<Value> {
-        let tool_name = params["name"]
-            .as_str()
-            .context("Missing tool name in request")?;
-
-        if tool_name == "execute_tool" {
-            // Handle the general execute_tool call
-            let arguments = params["arguments"]
-                .as_object()
-                .context("Missing arguments in execute_tool call")?;
-
-            let target_tool = arguments["tool_name"]
-                .as_str()
-                .context("Missing tool_name in execute_tool arguments")?;
-
-            let args = arguments.get("args").and_then(|v| v.as_str());
-
-            let result = self.execute_command(target_tool, args).await?;
-
-            Ok(serde_json::json!({
-                "content": [{
-                    "type": "text",
-                    "text": serde_json::to_string_pretty(&result)?
-                }]
-            }))
-        } else {
-            // Handle direct tool calls (for backward compatibility)
-            let args = params["arguments"].get("args").and_then(|v| v.as_str());
-
-            let result = self.execute_command(tool_name, args).await?;
-
-            Ok(serde_json::json!({
-                "content": [{
-                    "type": "text",
-                    "text": serde_json::to_string_pretty(&result)?
-                }]
-            }))
-        }
-    }
-
-    async fn handle_request(&self, request: MCPRequest) -> MCPResponse {
-        let result = match request.method.as_str() {
-            "tools/list" => Some(self.handle_list_tools()),
-            "tools/call" => match request.params.as_ref() {
-                Some(params) => match self.handle_call_tool(params).await {
-                    Ok(result) => Some(result),
-                    Err(e) => {
-                        return MCPResponse {
-                            jsonrpc: "2.0".to_string(),
-                            id: request.id,
-                            result: None,
-                            error: Some(MCPError {
-                                code: -32000,
-                                message: format!("Failed to execute tool: {}", e),
-                            }),
+                // Add individual tools for backward compatibility
+                for tool_config in self.tools.values() {
+                    tools.push(json!({
+                        "name": tool_config.name,
+                        "description": tool_config.description,
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "args": {
+                                    "type": "string",
+                                    "description": "Arguments for the command (optional)"
+                                }
+                            }
                         }
-                    }
-                },
-                None => {
-                    return MCPResponse {
-                        jsonrpc: "2.0".to_string(),
-                        id: request.id,
-                        result: None,
-                        error: Some(MCPError {
-                            code: -32602,
-                            message: "Missing parameters for tools/call".to_string(),
-                        }),
-                    }
+                    }));
                 }
-            },
-            "initialize" => Some(serde_json::json!({
-                "protocolVersion": "2024-11-05",
-                "capabilities": {
-                    "tools": {}
-                },
-                "serverInfo": {
-                    "name": "mycommandmcp",
-                    "version": "0.1.0"
-                }
-            })),
-            "initialized" => {
-                // Empty response for initialized method
-                Some(serde_json::json!({}))
+
+                json!({ "tools": tools })
             }
-            "notifications/initialized" => {
-                // Notification method, no response needed
-                Some(serde_json::json!({}))
+            "tools/call" => {
+                let params = request["params"]
+                    .as_object()
+                    .context("Missing params in tools/call request")?;
+
+                let tool_name = params["name"]
+                    .as_str()
+                    .context("Missing tool name in request")?;
+
+                if tool_name == "execute_tool" {
+                    let arguments = params["arguments"]
+                        .as_object()
+                        .context("Missing arguments in execute_tool call")?;
+
+                    let target_tool = arguments["tool_name"]
+                        .as_str()
+                        .context("Missing tool_name in execute_tool arguments")?;
+
+                    let args = arguments.get("args").and_then(|v| v.as_str());
+
+                    let result = self.execute_command(target_tool, args).await?;
+
+                    json!({
+                        "content": [{
+                            "type": "text",
+                            "text": serde_json::to_string_pretty(&result)?
+                        }],
+                        "isError": result.status_code != 0
+                    })
+                } else {
+                    let arguments = params.get("arguments").and_then(|v| v.as_object());
+                    let args = arguments
+                        .and_then(|args| args.get("args"))
+                        .and_then(|v| v.as_str());
+
+                    let result = self.execute_command(tool_name, args).await?;
+
+                    json!({
+                        "content": [{
+                            "type": "text",
+                            "text": serde_json::to_string_pretty(&result)?
+                        }],
+                        "isError": result.status_code != 0
+                    })
+                }
             }
             _ => {
-                eprintln!("Unknown method: {}", request.method);
-                return MCPResponse {
-                    jsonrpc: "2.0".to_string(),
-                    id: request.id,
-                    result: None,
-                    error: Some(MCPError {
-                        code: -32601,
-                        message: format!("Method not found: {}", request.method),
-                    }),
-                };
+                return Ok(json!({
+                    "jsonrpc": "2.0",
+                    "id": id,
+                    "error": {
+                        "code": -32601,
+                        "message": format!("Method not found: {}", method)
+                    }
+                })
+                .to_string());
             }
         };
 
-        MCPResponse {
-            jsonrpc: "2.0".to_string(),
-            id: request.id,
-            result,
-            error: None,
-        }
+        Ok(json!({
+            "jsonrpc": "2.0",
+            "id": id,
+            "result": result
+        })
+        .to_string())
     }
 }
 
@@ -327,8 +274,7 @@ async fn main() -> Result<()> {
     let args = Args::parse();
 
     let config_path = find_config_file(args.config)?;
-
-    let server = MCPServer::new(&config_path)?;
+    let server = MyCommandMCPServer::new(&config_path)?;
 
     eprintln!("MyCommandMCP Server starting...");
     eprintln!("Config file: {}", config_path);
@@ -364,31 +310,24 @@ async fn main() -> Result<()> {
 
                 eprintln!("Received input: {}", line);
 
-                match serde_json::from_str::<MCPRequest>(line) {
-                    Ok(request) => {
-                        eprintln!(
-                            "Processing request: {} (id: {:?})",
-                            request.method, request.id
-                        );
-                        let response = server.handle_request(request).await;
-                        let response_json = serde_json::to_string(&response)?;
-                        eprintln!("Sending response: {}", response_json);
-                        stdout.write_all(response_json.as_bytes()).await?;
+                match server.handle_request(line).await {
+                    Ok(response) => {
+                        eprintln!("Sending response: {}", response);
+                        stdout.write_all(response.as_bytes()).await?;
                         stdout.write_all(b"\n").await?;
                         stdout.flush().await?;
                     }
                     Err(e) => {
-                        eprintln!("Failed to parse request: {}", e);
-                        let error_response = MCPResponse {
-                            jsonrpc: "2.0".to_string(),
-                            id: None,
-                            result: None,
-                            error: Some(MCPError {
-                                code: -32700,
-                                message: format!("Parse error: {}", e),
-                            }),
-                        };
-                        let response_json = serde_json::to_string(&error_response)?;
+                        eprintln!("Failed to handle request: {}", e);
+                        let error_response = json!({
+                            "jsonrpc": "2.0",
+                            "id": null,
+                            "error": {
+                                "code": -32700,
+                                "message": format!("Parse error: {}", e)
+                            }
+                        });
+                        let response_json = error_response.to_string();
                         stdout.write_all(response_json.as_bytes()).await?;
                         stdout.write_all(b"\n").await?;
                         stdout.flush().await?;
