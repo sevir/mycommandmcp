@@ -1,0 +1,114 @@
+# GoReleaser configuration for Rust project
+# GoReleaser v2 format
+version: 2
+
+# Project metadata
+project_name: mycommandmcp
+
+# Global configuration
+env:
+  - CGO_ENABLED=0
+
+# Before hooks - build the Rust binaries for each platform
+before:
+  hooks:
+    # Clean previous builds and ensure fresh state
+    - rm -rf dist/
+    - cargo clean
+    # Update dependencies
+    - cargo update
+    # Setup cross-compilation environment
+    - ./setup-cross-compilation.sh
+    # Build for Linux x86_64
+    - cargo build --release --target x86_64-unknown-linux-gnu
+    # Build for Windows x86_64 using specialized script
+    - ./build-windows.sh
+    # Build for macOS x86_64 (skip if cross-compilation tools not available)
+    - bash -c "cargo build --release --target x86_64-apple-darwin || echo 'macOS Intel build skipped - not available on this platform'"
+    # Build for macOS ARM64 (skip if cross-compilation tools not available)
+    - bash -c "cargo build --release --target aarch64-apple-darwin || echo 'macOS ARM build skipped - not available on this platform'"
+    # Create dist directory structure
+    - mkdir -p dist/
+    # Copy binaries to dist with proper naming
+    - cp target/x86_64-unknown-linux-gnu/release/mycommandmcp dist/mycommandmcp_linux_amd64 || echo "Linux binary not found"
+    - cp target/x86_64-pc-windows-gnu/release/mycommandmcp.exe dist/mycommandmcp_windows_amd64.exe || echo "Windows binary not found"
+    - cp target/x86_64-apple-darwin/release/mycommandmcp dist/mycommandmcp_darwin_amd64 || echo "macOS Intel binary not found"
+    - cp target/aarch64-apple-darwin/release/mycommandmcp dist/mycommandmcp_darwin_arm64 || echo "macOS ARM binary not found"
+
+# Since we're using Rust, we disable Go builds entirely
+builds:
+  - skip: true
+
+# Create archives manually using shell commands since GoReleaser archives don't work well with pre-built Rust binaries
+archives:
+  - id: manual
+    name_template: "{{ .ProjectName }}_{{ .Version }}_manual"
+    files:
+      - none*
+
+# Use dist instead for manual file handling
+dist: dist
+
+# Checksum configuration
+checksum:
+  name_template: 'checksums.txt'
+  extra_files:
+    - glob: 'dist/mycommandmcp_*'
+
+# Snapshot configuration for development builds
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+# Skip validation since we're not using standard builds
+release:
+  prerelease: auto
+  header: |
+    ## MyCommandMCP {{ .Tag }} ({{ .Date }})
+    
+    Welcome to this new release!
+    
+    ## Downloads
+    
+    Choose the appropriate binary for your platform:
+    
+    - **Linux (x86_64)**: `mycommandmcp_linux_amd64`
+    - **Windows (x86_64)**: `mycommandmcp_windows_amd64.exe`  
+    - **macOS Intel (x86_64)**: `mycommandmcp_darwin_amd64`
+    - **macOS Apple Silicon (ARM64)**: `mycommandmcp_darwin_arm64`
+
+  footer: |
+    ## Installation
+    
+    1. Download the appropriate binary for your platform
+    2. Make it executable (Linux/macOS): `chmod +x mycommandmcp_*`
+    3. Move to your PATH or run directly
+    
+    ## Thanks!
+    
+    Those were the changes on {{ .Tag }}!
+
+# Changelog configuration
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "merge conflict"
+      - Merge pull request
+      - Merge remote-tracking branch
+      - Merge branch
+      - go mod tidy
+  groups:
+    - title: "New Features"
+      regexp: '^.*?feat(\(.+\))??!?:.+$'
+      order: 100
+    - title: "Bug fixes"
+      regexp: '^.*?fix(\(.+\))??!?:.+$'
+      order: 200
+    - title: "Documentation updates"
+      regexp: ^.*?doc(\(.+\))??!?:.+$
+      order: 400
+    - title: Other work
+      order: 9999
