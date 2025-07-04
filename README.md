@@ -173,5 +173,5 @@ This task are automatic scripts to help manage the project
 Generate release with goreleaser
 
 ```
-goreleaser release --snapshot --rm-dist
+goreleaser release --snapshot
 ```

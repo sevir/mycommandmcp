@@ -18,7 +18,7 @@ before:
     # Update dependencies
     - cargo update
     # Setup cross-compilation environment
-    - ./setup-cross-compilation.sh
+    # - ./setup-cross-compilation.sh
     # Create dist directory structure
     - mkdir -p dist/
     # Copy binaries to dist with proper naming
@@ -72,15 +72,13 @@ release:
     Choose the appropriate binary for your platform:
     
     - **Linux (x86_64)**: `mycommandmcp_linux_amd64`
-    - **Windows (x86_64)**: `mycommandmcp_windows_amd64.exe`  
-    - **macOS Intel (x86_64)**: `mycommandmcp_darwin_amd64`
-    - **macOS Apple Silicon (ARM64)**: `mycommandmcp_darwin_arm64`
+    - **Windows (x86_64)**: `mycommandmcp_windows_amd64.exe`
 
   footer: |
     ## Installation
     
     1. Download the appropriate binary for your platform
-    2. Make it executable (Linux/macOS): `chmod +x mycommandmcp_*`
+    2. Make it executable (Linux): `chmod +x mycommandmcp_*`
     3. Move to your PATH or run directly
     
     ## Thanks!
