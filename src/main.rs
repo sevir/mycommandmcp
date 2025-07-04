@@ -1,7 +1,8 @@
 mod cli_parser;
+mod logging;
 mod mcp_server;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::Parser;
 use serde_json::json;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
@@ -15,15 +16,20 @@ async fn main() -> Result<()> {
 
     let config_path = find_config_file(args.config)?;
     let tools = load_config(&config_path)?;
-    let server = MyCommandMCPServer::new(tools);
 
-    eprintln!("MyCommandMCP Server starting...");
-    eprintln!("Config file: {}", config_path);
-    eprintln!("Loaded {} tools:", server.tools.len());
+    // Initialize logger
+    let logger = logging::DualLogger::new(args.log_file.as_deref())
+        .context("Failed to initialize logging")?;
+
+    let server = MyCommandMCPServer::new(tools, logger);
+
+    server.log("MyCommandMCP Server starting...")?;
+    server.log(&format!("Config file: {}", config_path))?;
+    server.log(&format!("Loaded {} tools:", server.tools.len()))?;
 
     // Print available tools for debugging
     for tool in server.tools.values() {
-        eprintln!(
+        server.log(&format!(
             "  - {}: {} (path: {}, accepts_args: {}, accept_input: {}, default_args: {:?})",
             tool.name,
             tool.description,
@@ -31,7 +37,7 @@ async fn main() -> Result<()> {
             tool.accepts_args,
             tool.accept_input,
             tool.default_args
-        );
+        ))?;
     }
 
     let stdin = tokio::io::stdin();
@@ -39,13 +45,13 @@ async fn main() -> Result<()> {
     let mut reader = BufReader::new(stdin);
     let mut line = String::new();
 
-    eprintln!("Server ready, waiting for MCP requests...");
+    server.log("Server ready, waiting for MCP requests...")?;
 
     loop {
         line.clear();
         match reader.read_line(&mut line).await {
             Ok(0) => {
-                eprintln!("EOF received, shutting down server");
+                server.log("EOF received, shutting down server")?;
                 break; // EOF
             }
             Ok(_) => {
@@ -54,17 +60,17 @@ async fn main() -> Result<()> {
                     continue;
                 }
 
-                eprintln!("Received input: {}", line);
+                server.log(&format!("Received input: {}", line))?;
 
                 match server.handle_request(line).await {
                     Ok(response) => {
-                        eprintln!("Sending response: {}", response);
+                        server.log(&format!("Sending response: {}", response))?;
                         stdout.write_all(response.as_bytes()).await?;
                         stdout.write_all(b"\n").await?;
                         stdout.flush().await?;
                     }
                     Err(e) => {
-                        eprintln!("Failed to handle request: {}", e);
+                        server.log(&format!("Failed to handle request: {}", e))?;
                         let error_response = json!({
                             "jsonrpc": "2.0",
                             "id": null,
@@ -81,7 +87,7 @@ async fn main() -> Result<()> {
                 }
             }
             Err(e) => {
-                eprintln!("Error reading from stdin: {}", e);
+                server.log(&format!("Error reading from stdin: {}", e))?;
                 break;
             }
         }

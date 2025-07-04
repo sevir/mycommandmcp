@@ -1,11 +1,13 @@
 [package]
 edition = "2021"
 name = "mycommandmcp"
-version = "0.3.0"
+version = "0.5.0"
 
 [dependencies]
 anyhow = "1.0"
 async-trait = "0.1"
+base64 = "0.22"
+chrono = "0.4.41"
 clap = {version = "4.0", features = ["derive"]}
 dirs = "5.0"
 rust-mcp-sdk = "0.4.6"

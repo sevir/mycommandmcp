@@ -53,6 +53,8 @@ tools:
     accepts_args: true/false
     accept_input: true/false
     default_args: "default arguments string"
+    content_type: "mime/type"              # Optional: MIME type for file responses
+    content_disposition: "attachment; filename=file.ext"  # Optional: Content disposition
 ```
 
 #### Configuration attributes explained:
@@ -64,6 +66,8 @@ tools:
 - **accepts_args**: Whether the tool accepts additional arguments (true/false)
 - **accept_input**: Whether the tool accepts input via stdin (true/false)
 - **default_args**: (Optional) Default arguments always applied to the command, concatenated before any additional arguments
+- **content_type**: (Optional) MIME type of the command output (e.g., "application/pdf", "image/png", "text/csv")
+- **content_disposition**: (Optional) How the content should be handled (e.g., "attachment; filename=report.pdf", "inline")
 
 ### Configuration example
 
@@ -126,10 +130,59 @@ tools:
    ```
    This executes: `grep --color=never pattern` with input piped to stdin
 
+## Content Types and File Downloads
+
+MyCommandMCP now supports returning command outputs as different content types with proper file handling. This enables tools to return PDFs, images, archives, and other binary content.
+
+### Content Type Configuration
+
+Add optional `content_type` and `content_disposition` fields to enable file downloads:
+
+```yaml
+tools:
+  - name: "generate_report"
+    description: "Generate a PDF report"
+    command: "wkhtmltopdf"
+    path: "/"
+    accepts_args: true
+    accept_input: false
+    default_args: "- /dev/stdout"
+    content_type: "application/pdf"
+    content_disposition: "attachment; filename=report.pdf"
+
+  - name: "create_backup"
+    description: "Create a system backup archive"
+    command: "tar"
+    path: "/"
+    accepts_args: true
+    accept_input: false
+    default_args: "-czf - /home"
+    content_type: "application/gzip"
+    content_disposition: "attachment; filename=backup.tar.gz"
+
+  - name: "export_data_csv"
+    description: "Export data as CSV file"
+    command: "ps"
+    path: "/"
+    accepts_args: false
+    accept_input: false
+    default_args: "aux --no-headers | awk 'BEGIN{print \"USER,PID,CPU,MEM\"} {print $1\",\"$2\",\"$3\",\"$4}'"
+    content_type: "text/csv"
+    content_disposition: "attachment; filename=processes.csv"
+```
+
+### How Content Types Work
+
+- **Text Content**: When no `content_type` is specified or it starts with `text/`, output is returned as plain text
+- **Binary Content**: When `content_type` indicates binary content, output is automatically base64 encoded
+- **File Response**: Content includes proper MIME type and disposition headers for file handling
+
+For detailed documentation, see [CONTENT_TYPES.md](CONTENT_TYPES.md).
+
 ## Included configuration files
 
-- `mycommand-tools.yaml`: Basic configuration with 5 tools
-- `mycommand-tools-extended.yaml`: Extended configuration with 12 tools
+- `mycommand-tools.yaml`: Basic configuration with example content-type tools
+- `mycommand-tools-extended.yaml`: Extended configuration with content-type examples
 
 ## MCP Protocol
 

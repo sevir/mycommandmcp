@@ -13,6 +13,10 @@ pub struct Args {
     /// Path to the YAML configuration file
     #[arg(short, long)]
     pub config: Option<String>,
+
+    /// Path to the log file (if specified, logs will be written to both file and terminal)
+    #[arg(short, long)]
+    pub log_file: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -25,6 +29,10 @@ pub struct ToolConfig {
     pub accept_input: bool,
     #[serde(default)]
     pub default_args: Option<String>,
+    #[serde(default)]
+    pub content_type: Option<String>,
+    #[serde(default)]
+    pub content_disposition: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

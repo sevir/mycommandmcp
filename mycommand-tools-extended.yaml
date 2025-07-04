@@ -120,3 +120,44 @@ tools:
     path: "/"
     accepts_args: true
     accept_input: true
+
+  # Examples with content types for file downloads
+  - name: "export_processes_csv"
+    description: "Export running processes as CSV file"
+    command: "ps"
+    path: "/"
+    accepts_args: true
+    accept_input: false
+    default_args: "aux --no-headers | awk 'BEGIN{print \"USER,PID,CPU,MEM,COMMAND\"} {print $1\",\"$2\",\"$3\",\"$4\",\"$11}'"
+    content_type: "text/csv"
+    content_disposition: "attachment; filename=processes.csv"
+    
+  - name: "system_info_json"
+    description: "Get system information as JSON file"
+    command: "bash"
+    path: "/"
+    accepts_args: false
+    accept_input: false
+    default_args: "-c 'echo \"{\\\"hostname\\\":\\\"$(hostname)\\\", \\\"uptime\\\":\\\"$(uptime -p)\\\", \\\"kernel\\\":\\\"$(uname -r)\\\"}\""
+    content_type: "application/json"
+    content_disposition: "inline; filename=system_info.json"
+    
+  - name: "create_logs_archive"
+    description: "Create a compressed archive of system logs"
+    command: "tar"
+    path: "/"
+    accepts_args: true
+    accept_input: false
+    default_args: "-czf - /var/log"
+    content_type: "application/gzip"
+    content_disposition: "attachment; filename=system_logs.tar.gz"
+    
+  - name: "system_report_html"
+    description: "Generate system report as HTML file"
+    command: "bash"
+    path: "/"
+    accepts_args: false
+    accept_input: false
+    default_args: "-c 'echo \"<html><head><title>System Report</title></head><body><h1>System Information</h1><p>Hostname: $(hostname)</p><p>Uptime: $(uptime -p)</p><p>Disk Usage: $(df -h / | tail -1)</p></body></html>\""
+    content_type: "text/html"
+    content_disposition: "attachment; filename=system_report.html"

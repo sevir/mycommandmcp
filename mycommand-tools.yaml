@@ -52,3 +52,33 @@ tools:
     path: "/"
     accepts_args: true
     accept_input: true
+
+  - name: "create_tar_gz"
+    description: "Create a compressed tar.gz archive of a directory"
+    command: "tar"
+    path: "/"
+    accepts_args: true
+    accept_input: false
+    default_args: "-czf /tmp/archive.tar.gz"
+    content_type: "application/gzip"
+    content_disposition: "attachment; filename=archive.tar.gz"
+
+  - name: "take_screenshot"
+    description: "Takes a screenshot and returns it as PNG"
+    command: "scrot"
+    path: "/"
+    accepts_args: true
+    accept_input: false
+    default_args: "-o /dev/stdout"
+    content_type: "image/png"
+    content_disposition: "attachment; filename=screenshot.png"
+
+  - name: "generate_pdf_report"
+    description: "Generate a simple PDF report"
+    command: "echo"
+    path: "/"
+    accepts_args: false
+    accept_input: false
+    default_args: "This would be PDF content"
+    content_type: "application/pdf"
+    content_disposition: "attachment; filename=report.pdf"
