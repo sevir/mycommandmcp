@@ -24,8 +24,8 @@ async fn main() -> Result<()> {
     // Print available tools for debugging
     for tool in server.tools.values() {
         eprintln!(
-            "  - {}: {} (path: {}, accepts_args: {})",
-            tool.name, tool.description, tool.path, tool.accepts_args
+            "  - {}: {} (path: {}, accepts_args: {}, accept_input: {})",
+            tool.name, tool.description, tool.path, tool.accepts_args, tool.accept_input
         );
     }
 

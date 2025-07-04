@@ -23,7 +23,12 @@ impl MyCommandMCPServer {
         MyCommandMCPServer { tools }
     }
 
-    pub async fn execute_command(&self, tool_name: &str, args: Option<&str>) -> Result<CommandResult> {
+    pub async fn execute_command(
+        &self,
+        tool_name: &str,
+        args: Option<&str>,
+        input: Option<&str>,
+    ) -> Result<CommandResult> {
         let tool = self
             .tools
             .get(tool_name)
@@ -40,9 +45,38 @@ impl MyCommandMCPServer {
             }
         }
 
-        // Use tokio::process::Command for async execution
-        let output = tokio::process::Command::from(cmd)
-            .output()
+        // Create tokio process command
+        let mut tokio_cmd = tokio::process::Command::from(cmd);
+
+        // Configure stdin if the tool accepts input
+        if tool.accept_input {
+            tokio_cmd.stdin(std::process::Stdio::piped());
+        }
+
+        tokio_cmd.stdout(std::process::Stdio::piped());
+        tokio_cmd.stderr(std::process::Stdio::piped());
+
+        // Spawn the process
+        let mut child = tokio_cmd
+            .spawn()
+            .context(format!("Failed to spawn command: {}", tool.command))?;
+
+        // If tool accepts input and input is provided, write to stdin
+        if tool.accept_input && input.is_some() {
+            if let Some(stdin) = child.stdin.as_mut() {
+                if let Some(input_str) = input {
+                    use tokio::io::AsyncWriteExt;
+                    stdin.write_all(input_str.as_bytes()).await?;
+                    stdin.flush().await?;
+                }
+            }
+            // Close stdin to signal end of input
+            child.stdin.take();
+        }
+
+        // Wait for the process to complete and get output
+        let output = child
+            .wait_with_output()
             .await
             .context(format!("Failed to execute command: {}", tool.command))?;
 
@@ -63,78 +97,97 @@ impl MyCommandMCPServer {
         let method = request["method"].as_str().unwrap_or("");
         let id = request.get("id").cloned();
 
-        let result = match method {
-            "initialize" => {
-                json!({
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {
-                        "tools": {}
-                    },
-                    "serverInfo": {
-                        "name": "mycommandmcp",
-                        "version": "0.1.0"
-                    }
-                })
-            }
-            "initialized" => json!({}),
-            "tools/list" => {
-                let mut tools = Vec::new();
-
-                // Add individual tools
-                for tool_config in self.tools.values() {
-                    tools.push(json!({
-                        "name": tool_config.name,
-                        "description": tool_config.description,
-                        "inputSchema": {
-                            "type": "object",
-                            "properties": {
-                                "args": {
-                                    "type": "string",
-                                    "description": "Arguments for the command (optional)"
-                                }
-                            }
+        let result =
+            match method {
+                "initialize" => {
+                    json!({
+                        "protocolVersion": "2024-11-05",
+                        "capabilities": {
+                            "tools": {}
+                        },
+                        "serverInfo": {
+                            "name": "mycommandmcp",
+                            "version": "0.1.0"
                         }
-                    }));
+                    })
                 }
+                "initialized" => json!({}),
+                "tools/list" => {
+                    let mut tools = Vec::new();
 
-                json!({ "tools": tools })
-            }
-            "tools/call" => {
-                let params = request["params"]
-                    .as_object()
-                    .context("Missing params in tools/call request")?;
+                    // Add individual tools
+                    for tool_config in self.tools.values() {
+                        let mut properties = serde_json::Map::new();
 
-                let tool_name = params["name"]
-                    .as_str()
-                    .context("Missing tool name in request")?;
+                        // Always include args property
+                        properties.insert(
+                            "args".to_string(),
+                            json!({
+                                "type": "string",
+                                "description": "Arguments for the command (optional)"
+                            }),
+                        );
 
-                let arguments = params.get("arguments").and_then(|v| v.as_object());
-                let args = arguments
-                    .and_then(|args| args.get("args"))
-                    .and_then(|v| v.as_str());
+                        // Add input property if tool accepts input
+                        if tool_config.accept_input {
+                            properties.insert("input".to_string(), json!({
+                            "type": "string",
+                            "description": "Text input to send to the command's standard input"
+                        }));
+                        }
 
-                let result = self.execute_command(tool_name, args).await?;
-
-                json!({
-                    "content": [{
-                        "type": "text",
-                        "text": serde_json::to_string_pretty(&result)?
-                    }],
-                    "isError": result.status_code != 0
-                })
-            }
-            _ => {
-                return Ok(json!({
-                    "jsonrpc": "2.0",
-                    "id": id,
-                    "error": {
-                        "code": -32601,
-                        "message": format!("Method not found: {}", method)
+                        tools.push(json!({
+                            "name": tool_config.name,
+                            "description": tool_config.description,
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": properties
+                            }
+                        }));
                     }
-                })
-                .to_string());
-            }
-        };
+
+                    json!({ "tools": tools })
+                }
+                "tools/call" => {
+                    let params = request["params"]
+                        .as_object()
+                        .context("Missing params in tools/call request")?;
+
+                    let tool_name = params["name"]
+                        .as_str()
+                        .context("Missing tool name in request")?;
+
+                    let arguments = params.get("arguments").and_then(|v| v.as_object());
+                    let args = arguments
+                        .and_then(|args| args.get("args"))
+                        .and_then(|v| v.as_str());
+
+                    let input = arguments
+                        .and_then(|args| args.get("input"))
+                        .and_then(|v| v.as_str());
+
+                    let result = self.execute_command(tool_name, args, input).await?;
+
+                    json!({
+                        "content": [{
+                            "type": "text",
+                            "text": serde_json::to_string_pretty(&result)?
+                        }],
+                        "isError": result.status_code != 0
+                    })
+                }
+                _ => {
+                    return Ok(json!({
+                        "jsonrpc": "2.0",
+                        "id": id,
+                        "error": {
+                            "code": -32601,
+                            "message": format!("Method not found: {}", method)
+                        }
+                    })
+                    .to_string());
+                }
+            };
 
         Ok(json!({
             "jsonrpc": "2.0",

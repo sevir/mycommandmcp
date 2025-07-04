@@ -22,6 +22,7 @@ pub struct ToolConfig {
     pub command: String,
     pub path: String,
     pub accepts_args: bool,
+    pub accept_input: bool,
 }
 
 #[derive(Debug, Deserialize)]

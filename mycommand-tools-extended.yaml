@@ -8,18 +8,21 @@ tools:
     command: "ls"
     path: "/"
     accepts_args: true
+    accept_input: false
     
   - name: "get_date"
     description: "Gets the current system date and time"
     command: "date"
     path: "/"
     accepts_args: false
+    accept_input: false
     
   - name: "current_directory"
     description: "Shows the current working directory"
     command: "pwd"
     path: "/"
     accepts_args: false
+    accept_input: false
     
   # System information tools
   - name: "disk_usage"
@@ -27,18 +30,21 @@ tools:
     command: "df"
     path: "/"
     accepts_args: true
+    accept_input: false
     
   - name: "memory_info"
     description: "Shows information about system memory usage"
     command: "free"
     path: "/"
     accepts_args: true
+    accept_input: false
     
   - name: "process_list"
     description: "Lists running processes. Accepts arguments like aux, -ef, etc."
     command: "ps"
     path: "/"
     accepts_args: true
+    accept_input: false
     
   # Network tools
   - name: "network_interfaces"
@@ -46,12 +52,14 @@ tools:
     command: "ip"
     path: "/"
     accepts_args: true
+    accept_input: false
     
   - name: "ping_host"
     description: "Pings a specific host. Requires arguments like -c 4 hostname"
     command: "ping"
     path: "/"
     accepts_args: true
+    accept_input: false
     
   # File tools
   - name: "file_content"
@@ -59,12 +67,14 @@ tools:
     command: "cat"
     path: "/"
     accepts_args: true
+    accept_input: false
     
   - name: "file_info"
     description: "Shows detailed information about files or directories"
     command: "stat"
     path: "/"
     accepts_args: true
+    accept_input: false
     
   # Search tools
   - name: "find_files"
@@ -72,9 +82,33 @@ tools:
     command: "find"
     path: "/"
     accepts_args: true
+    accept_input: false
     
   - name: "grep_text"
-    description: "Searches for text in files. Accepts arguments like 'pattern' file"
+    description: "Searches for text in files or from standard input. Accepts arguments like 'pattern' or just 'pattern' when using input"
     command: "grep"
     path: "/"
     accepts_args: true
+    accept_input: true
+    
+  # Text processing tools that benefit from standard input
+  - name: "word_count"
+    description: "Count lines, words, and characters from files or standard input"
+    command: "wc"
+    path: "/"
+    accepts_args: true
+    accept_input: true
+    
+  - name: "sort_text"
+    description: "Sort lines of text from files or standard input"
+    command: "sort"
+    path: "/"
+    accepts_args: true
+    accept_input: true
+    
+  - name: "unique_lines"
+    description: "Report or omit repeated lines from standard input"
+    command: "uniq"
+    path: "/"
+    accepts_args: true
+    accept_input: true

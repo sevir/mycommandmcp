@@ -4,27 +4,46 @@ tools:
     command: "ls"
     path: "/"
     accepts_args: true
+    accept_input: false
     
   - name: "get_date"
     description: "Gets the current system date and time"
     command: "date"
     path: "/"
     accepts_args: false
+    accept_input: false
     
   - name: "disk_usage"
     description: "Shows disk usage in the system"
     command: "df"
     path: "/"
     accepts_args: true
+    accept_input: false
     
   - name: "process_list"
     description: "Lists running processes"
     command: "ps"
     path: "/"
     accepts_args: true
+    accept_input: false
     
   - name: "network_info"
     description: "Shows network configuration information"
     command: "ip"
     path: "/"
     accepts_args: true
+    accept_input: false
+    
+  - name: "grep_text"
+    description: "Search for text patterns using grep from standard input"
+    command: "grep"
+    path: "/"
+    accepts_args: true
+    accept_input: true
+    
+  - name: "word_count"
+    description: "Count lines, words, and characters from standard input"
+    command: "wc"
+    path: "/"
+    accepts_args: true
+    accept_input: true

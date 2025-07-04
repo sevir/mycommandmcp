@@ -1,0 +1,29 @@
+# Example configuration demonstrating the accept_input feature
+tools:
+  - name: "echo_text"
+    description: "Echo text from standard input"
+    command: "cat"
+    path: "/"
+    accepts_args: false
+    accept_input: true
+    
+  - name: "count_lines"
+    description: "Count lines from standard input"
+    command: "wc"
+    path: "/"
+    accepts_args: true
+    accept_input: true
+    
+  - name: "sort_lines"
+    description: "Sort lines from standard input"
+    command: "sort"
+    path: "/"
+    accepts_args: true
+    accept_input: true
+    
+  - name: "uppercase_text"
+    description: "Convert text to uppercase from standard input"
+    command: "tr"
+    path: "/"
+    accepts_args: true
+    accept_input: true
