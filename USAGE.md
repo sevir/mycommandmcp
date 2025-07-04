@@ -91,6 +91,47 @@ tools:
     command: "system_command"
     path: "/execution/path"
     accepts_args: true
+    accept_input: false
+    default_args: "default arguments"
+```
+
+### Configuration attributes:
+
+- **name**: Unique tool identifier
+- **description**: Tool description for MCP clients
+- **command**: System command to execute
+- **path**: Working directory for command execution
+- **accepts_args**: Whether tool accepts additional arguments (true/false)
+- **accept_input**: Whether tool accepts stdin input (true/false)
+- **default_args**: (Optional) Default arguments always applied to the command
+
+### Examples with new attributes:
+
+#### Tool with default arguments:
+```yaml
+- name: "list_files_detailed"
+  description: "Lists files with detailed information"
+  command: "ls"
+  path: "/"
+  accepts_args: true
+  accept_input: false
+  default_args: "-la --color=never"
+```
+
+#### Tool that accepts input:
+```yaml
+- name: "search_text"
+  description: "Search for patterns in text input"
+  command: "grep"
+  path: "/"
+  accepts_args: true
+  accept_input: true
+  default_args: "--color=never -n"
+```
+
+#### Using tools with input:
+```bash
+echo '{"jsonrpc": "2.0", "id": 5, "method": "tools/call", "params": {"name": "search_text", "arguments": {"args": "pattern", "input": "line 1\npattern found\nline 3"}}}' | ./target/release/mycommandmcp
 ```
 
 Then run:
@@ -137,5 +178,16 @@ mycommandmcp/
 ✅ **--config parameter**: Specify any YAML configuration file
 ✅ **Multiple configurations**: Basic and extended included
 ✅ **Updated scripts**: Support for custom configuration files
+✅ **default_args attribute**: Default arguments automatically applied to commands
+✅ **accept_input attribute**: Support for stdin input to commands
+
+### How default_args works:
+- Default arguments are applied first, then any additional arguments are concatenated
+- Example: `default_args: "-l"` + `args: "-a"` = `ls -l -a`
+
+### How accept_input works:
+- Tools with `accept_input: true` can receive text via stdin
+- Useful for commands like grep, wc, sort that process text streams
+- Provide input using the `input` parameter in MCP tool calls
 
 The MCP server is ready to use with flexible configurations! 🎉

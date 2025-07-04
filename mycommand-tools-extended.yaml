@@ -9,6 +9,7 @@ tools:
     path: "/"
     accepts_args: true
     accept_input: false
+    default_args: "-l --color=never"
     
   - name: "get_date"
     description: "Gets the current system date and time"
@@ -31,6 +32,7 @@ tools:
     path: "/"
     accepts_args: true
     accept_input: false
+    default_args: "-h"
     
   - name: "memory_info"
     description: "Shows information about system memory usage"
@@ -38,6 +40,7 @@ tools:
     path: "/"
     accepts_args: true
     accept_input: false
+    default_args: "-h"
     
   - name: "process_list"
     description: "Lists running processes. Accepts arguments like aux, -ef, etc."
@@ -45,6 +48,7 @@ tools:
     path: "/"
     accepts_args: true
     accept_input: false
+    default_args: "aux"
     
   # Network tools
   - name: "network_interfaces"
@@ -53,6 +57,7 @@ tools:
     path: "/"
     accepts_args: true
     accept_input: false
+    default_args: "addr show"
     
   - name: "ping_host"
     description: "Pings a specific host. Requires arguments like -c 4 hostname"
@@ -60,6 +65,7 @@ tools:
     path: "/"
     accepts_args: true
     accept_input: false
+    default_args: "-c 4"
     
   # File tools
   - name: "file_content"
@@ -83,6 +89,7 @@ tools:
     path: "/"
     accepts_args: true
     accept_input: false
+    default_args: ". -type f"
     
   - name: "grep_text"
     description: "Searches for text in files or from standard input. Accepts arguments like 'pattern' or just 'pattern' when using input"
@@ -90,6 +97,7 @@ tools:
     path: "/"
     accepts_args: true
     accept_input: true
+    default_args: "--color=never -n"
     
   # Text processing tools that benefit from standard input
   - name: "word_count"

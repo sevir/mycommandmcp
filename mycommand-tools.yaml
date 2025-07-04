@@ -5,6 +5,7 @@ tools:
     path: "/"
     accepts_args: true
     accept_input: false
+    default_args: "-l"
     
   - name: "get_date"
     description: "Gets the current system date and time"
@@ -19,6 +20,7 @@ tools:
     path: "/"
     accepts_args: true
     accept_input: false
+    default_args: "-h"
     
   - name: "process_list"
     description: "Lists running processes"
@@ -26,6 +28,7 @@ tools:
     path: "/"
     accepts_args: true
     accept_input: false
+    default_args: "aux"
     
   - name: "network_info"
     description: "Shows network configuration information"
@@ -33,6 +36,7 @@ tools:
     path: "/"
     accepts_args: true
     accept_input: false
+    default_args: "addr show"
     
   - name: "grep_text"
     description: "Search for text patterns using grep from standard input"
@@ -40,6 +44,7 @@ tools:
     path: "/"
     accepts_args: true
     accept_input: true
+    default_args: "--color=never"
     
   - name: "word_count"
     description: "Count lines, words, and characters from standard input"

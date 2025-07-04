@@ -23,6 +23,8 @@ pub struct ToolConfig {
     pub path: String,
     pub accepts_args: bool,
     pub accept_input: bool,
+    #[serde(default)]
+    pub default_args: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

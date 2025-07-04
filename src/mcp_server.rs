@@ -38,6 +38,15 @@ impl MyCommandMCPServer {
         cmd.current_dir(&tool.path);
 
         if tool.accepts_args {
+            // First add default args if they exist
+            if let Some(default_args_str) = &tool.default_args {
+                if !default_args_str.is_empty() {
+                    let default_args_vec: Vec<&str> = default_args_str.split_whitespace().collect();
+                    cmd.args(default_args_vec);
+                }
+            }
+
+            // Then add any additional args provided
             if let Some(args_str) = args {
                 // Split arguments by whitespace (simplified)
                 let args_vec: Vec<&str> = args_str.split_whitespace().collect();
