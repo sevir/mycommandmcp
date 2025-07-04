@@ -8,7 +8,7 @@ use std::path::Path;
 #[derive(Parser)]
 #[command(name = "mycommandmcp")]
 #[command(about = "A MCP server that executes system commands from YAML configuration")]
-#[command(version = "0.1.0")]
+#[command(version = env!("CARGO_PKG_VERSION"))]
 pub struct Args {
     /// Path to the YAML configuration file
     #[arg(short, long)]
