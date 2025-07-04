@@ -163,3 +163,15 @@ When a tool is executed, the server returns a JSON with:
 ## License
 
 MIT License
+
+## Tasks
+
+This task are automatic scripts to help manage the project
+
+### release
+
+Generate release with goreleaser
+
+```
+goreleaser release --snapshot --rm-dist
+```
