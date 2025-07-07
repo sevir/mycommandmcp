@@ -1,3 +1,18 @@
+prompts:
+  - name: "summarize"
+    description: "Summarize a given text"
+    content: |
+      Please summarize the following text in 3 sentences or less.
+      Consider the main points and key details.
+      Maintain a clear and concise style.
+
+  - name: "translate"
+    description: "Translate text to Spanish"
+    content: |
+      Translate the following text to Spanish.
+      Preserve the original meaning and tone.
+      Use natural and fluent Spanish language.
+
 tools:
   - name: "list_files"
     description: "Lists files in a specific directory"

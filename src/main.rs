@@ -15,19 +15,24 @@ async fn main() -> Result<()> {
     let args = Args::parse();
 
     let config_path = find_config_file(args.config)?;
-    let tools = load_config(&config_path)?;
+    let config = load_config(&config_path)?;
 
     // Initialize logger
     let logger = logging::DualLogger::new(args.log_file.as_deref())
         .context("Failed to initialize logging")?;
 
-    let server = MyCommandMCPServer::new(tools, logger);
+    let server = MyCommandMCPServer::new(config, logger);
 
     server.log("MyCommandMCP Server starting...")?;
     server.log(&format!("Config file: {}", config_path))?;
-    server.log(&format!("Loaded {} tools:", server.tools.len()))?;
+    server.log(&format!(
+        "Loaded {} tools and {} prompts:",
+        server.tools.len(),
+        server.prompts.len()
+    ))?;
 
     // Print available tools for debugging
+    server.log("Tools:")?;
     for tool in server.tools.values() {
         server.log(&format!(
             "  - {}: {} (path: {}, accepts_args: {}, accept_input: {}, default_args: {:?})",
@@ -38,6 +43,12 @@ async fn main() -> Result<()> {
             tool.accept_input,
             tool.default_args
         ))?;
+    }
+
+    // Print available prompts for debugging
+    server.log("\nPrompts:")?;
+    for prompt in server.prompts.values() {
+        server.log(&format!("  - {}: {}", prompt.name, prompt.description))?;
     }
 
     let stdin = tokio::io::stdin();

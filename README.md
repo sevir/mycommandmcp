@@ -9,6 +9,7 @@ An MCP (Model Context Protocol) server written in Rust that allows executing sys
 - Executes system commands safely
 - Returns results in JSON format with status code, output, and errors
 - Compatible with MCP protocol 2024-11-05
+- Supports configurable prompt templates
 
 ## Installation and Usage
 
@@ -44,7 +45,17 @@ The server reads configuration from a YAML file. By default it looks for `mycomm
 
 ### Configuration file structure
 
+The configuration file supports two main sections: `prompts` and `tools`.
+
 ```yaml
+prompts:
+  - name: "prompt_name"
+    description: "Description of what the prompt does"
+    content: |
+      Multi-line prompt template content
+      Can contain instructions and formatting
+      Supports multiple lines with proper indentation
+
 tools:
   - name: "tool_name"
     description: "Tool description for MCP"
@@ -191,6 +202,51 @@ The server implements the following MCP methods:
 - `initialize`: Initializes the server and returns capabilities
 - `tools/list`: Lists all available tools
 - `tools/call`: Executes a specific tool
+- `prompts/list`: Lists all available prompts with their names and descriptions
+- `prompts/get`: Retrieves the full content of a specific prompt by name
+
+### Prompts API
+
+#### List Prompts
+```json
+{"jsonrpc": "2.0", "id": 1, "method": "prompts/list"}
+```
+Response:
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "prompts": [
+      {
+        "name": "summarize",
+        "description": "Summarize a given text"
+      },
+      {
+        "name": "translate",
+        "description": "Translate text to Spanish"
+      }
+    ]
+  }
+}
+```
+
+#### Get Prompt
+```json
+{"jsonrpc": "2.0", "id": 2, "method": "prompts/get", "params": {"name": "summarize"}}
+```
+Response:
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {
+    "name": "summarize",
+    "description": "Summarize a given text",
+    "content": "Please summarize the following text in 3 sentences or less.\nConsider the main points and key details.\nMaintain a clear and concise style."
+  }
+}
+```
 
 ### Response format
 

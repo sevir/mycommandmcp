@@ -20,6 +20,13 @@ pub struct Args {
 }
 
 #[derive(Debug, Deserialize, Clone)]
+pub struct PromptConfig {
+    pub name: String,
+    pub description: String,
+    pub content: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
 pub struct ToolConfig {
     pub name: String,
     pub description: String,
@@ -38,6 +45,13 @@ pub struct ToolConfig {
 #[derive(Debug, Deserialize)]
 pub struct ToolsConfig {
     pub tools: Vec<ToolConfig>,
+    #[serde(default)]
+    pub prompts: Vec<PromptConfig>,
+}
+
+pub struct ConfigData {
+    pub tools: HashMap<String, ToolConfig>,
+    pub prompts: HashMap<String, PromptConfig>,
 }
 
 /// Find the configuration file in the appropriate location based on the OS
@@ -82,7 +96,7 @@ pub fn find_config_file(explicit_path: Option<String>) -> Result<String> {
 }
 
 /// Load and parse the configuration file
-pub fn load_config(config_path: &str) -> Result<HashMap<String, ToolConfig>> {
+pub fn load_config(config_path: &str) -> Result<ConfigData> {
     let config_content = fs::read_to_string(config_path)
         .context(format!("Failed to read config file: {}", config_path))?;
 
@@ -94,5 +108,14 @@ pub fn load_config(config_path: &str) -> Result<HashMap<String, ToolConfig>> {
         tools.insert(tool.name.clone(), tool);
     }
 
-    Ok(tools)
+    let mut prompts = HashMap::new();
+    for prompt in config.prompts {
+        // Validate unique prompt names
+        if prompts.contains_key(&prompt.name) {
+            return Err(anyhow::anyhow!("Duplicate prompt name: {}", prompt.name));
+        }
+        prompts.insert(prompt.name.clone(), prompt);
+    }
+
+    Ok(ConfigData { tools, prompts })
 }

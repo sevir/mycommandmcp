@@ -5,7 +5,7 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::process::Command;
 
-use crate::cli_parser::ToolConfig;
+use crate::cli_parser::{ConfigData, PromptConfig, ToolConfig};
 use crate::logging::DualLogger;
 
 #[derive(Debug, Serialize)]
@@ -20,12 +20,17 @@ pub struct CommandResult {
 
 pub struct MyCommandMCPServer {
     pub tools: HashMap<String, ToolConfig>,
+    pub prompts: HashMap<String, PromptConfig>,
     logger: DualLogger,
 }
 
 impl MyCommandMCPServer {
-    pub fn new(tools: HashMap<String, ToolConfig>, logger: DualLogger) -> Self {
-        MyCommandMCPServer { tools, logger }
+    pub fn new(config: ConfigData, logger: DualLogger) -> Self {
+        MyCommandMCPServer {
+            tools: config.tools,
+            prompts: config.prompts,
+            logger,
+        }
     }
 
     pub fn log(&self, message: &str) -> Result<()> {
@@ -155,7 +160,8 @@ impl MyCommandMCPServer {
                 json!({
                     "protocolVersion": "2024-11-05",
                     "capabilities": {
-                        "tools": {}
+                        "tools": {},
+                        "prompts": {}
                     },
                     "serverInfo": {
                         "name": "mycommandmcp",
@@ -268,6 +274,49 @@ impl MyCommandMCPServer {
                     })
                 }
             }
+            "prompts/list" => {
+                let prompts = self
+                    .prompts
+                    .values()
+                    .map(|p| {
+                        json!({
+                            "name": p.name,
+                            "description": p.description
+                        })
+                    })
+                    .collect::<Vec<_>>();
+
+                json!({ "prompts": prompts })
+            }
+
+            "prompts/get" => {
+                let params = request["params"]
+                    .as_object()
+                    .context("Missing params in prompts/get request")?;
+
+                let prompt_name = params["name"]
+                    .as_str()
+                    .context("Missing prompt name in request")?;
+
+                if let Some(prompt) = self.prompts.get(prompt_name) {
+                    json!({
+                        "name": prompt.name,
+                        "description": prompt.description,
+                        "content": prompt.content
+                    })
+                } else {
+                    return Ok(json!({
+                        "jsonrpc": "2.0",
+                        "id": id,
+                        "error": {
+                            "code": -32000,
+                            "message": format!("Prompt not found: {}", prompt_name)
+                        }
+                    })
+                    .to_string());
+                }
+            }
+
             _ => {
                 return Ok(json!({
                     "jsonrpc": "2.0",
