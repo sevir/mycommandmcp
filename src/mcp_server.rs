@@ -5,7 +5,7 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::process::Command;
 
-use crate::cli_parser::{ConfigData, PromptConfig, ToolConfig};
+use crate::cli_parser::{ConfigData, PromptConfig, ResourceConfig, ToolConfig};
 use crate::logging::DualLogger;
 
 #[derive(Debug, Serialize)]
@@ -21,6 +21,7 @@ pub struct CommandResult {
 pub struct MyCommandMCPServer {
     pub tools: HashMap<String, ToolConfig>,
     pub prompts: HashMap<String, PromptConfig>,
+    pub resources: HashMap<String, ResourceConfig>,
     logger: DualLogger,
 }
 
@@ -29,6 +30,7 @@ impl MyCommandMCPServer {
         MyCommandMCPServer {
             tools: config.tools,
             prompts: config.prompts,
+            resources: config.resources,
             logger,
         }
     }
@@ -155,13 +157,148 @@ impl MyCommandMCPServer {
         let method = request["method"].as_str().unwrap_or("");
         let id = request.get("id").cloned();
 
+        // Handle notifications (no response needed)
+        if method.starts_with("notifications/") {
+            self.log(&format!("Received notification: {}", method))?;
+            return Ok(String::new()); // Empty response for notifications
+        }
+
         let result = match method {
+            "resources/list" => {
+                let mut resources = Vec::new();
+                for resource_config in self.resources.values() {
+                    resources.push(json!({
+                        "uri": format!("file://{}", resource_config.name),
+                        "name": resource_config.name,
+                        "description": resource_config.description,
+                        "mimeType": if resource_config.path.ends_with(".json") {
+                            "application/json"
+                        } else if resource_config.path.ends_with(".txt") {
+                            "text/plain"
+                        } else {
+                            "application/octet-stream"
+                        }
+                    }));
+                }
+                json!({ "resources": resources })
+            }
+            "resources/read" => {
+                let params = request["params"]
+                    .as_object()
+                    .context("Missing params in resources/read request")?;
+                let resource_uri = params["uri"]
+                    .as_str()
+                    .context("Missing resource uri in request")?;
+
+                // Extract resource name from URI (remove file:// prefix if present)
+                let resource_name = if resource_uri.starts_with("file://") {
+                    &resource_uri[7..]
+                } else {
+                    resource_uri
+                };
+
+                let resource = self
+                    .resources
+                    .get(resource_name)
+                    .context(format!("Resource '{resource_name}' not found"))?;
+
+                self.log(&format!(
+                    "Fetching resource '{}' from path: {}",
+                    resource_name, resource.path
+                ))?;
+
+                let (content, mime_type) = if resource.path.starts_with("http://")
+                    || resource.path.starts_with("https://")
+                {
+                    // Handle URL resources
+                    self.log(&format!("Fetching URL: {}", resource.path))?;
+                    let response = reqwest::get(&resource.path).await.map_err(|e| {
+                        anyhow::anyhow!("Failed to fetch URL '{}': {}", resource.path, e)
+                    })?;
+
+                    let content_type = response
+                        .headers()
+                        .get("content-type")
+                        .and_then(|ct| ct.to_str().ok())
+                        .unwrap_or("application/octet-stream");
+
+                    let mime_type = content_type
+                        .split(';')
+                        .next()
+                        .unwrap_or("application/octet-stream")
+                        .to_string();
+                    let content = response
+                        .bytes()
+                        .await
+                        .map_err(|e| anyhow::anyhow!("Failed to read response body: {}", e))?
+                        .to_vec();
+
+                    self.log(&format!(
+                        "Successfully fetched {} bytes from URL, content-type: {}",
+                        content.len(),
+                        mime_type
+                    ))?;
+                    (content, mime_type)
+                } else {
+                    // Handle local file resources
+                    use std::fs;
+                    use std::path::Path;
+                    let path = Path::new(&resource.path);
+                    self.log(&format!("Reading local file: {}", path.display()))?;
+                    let content = fs::read(path).map_err(|e| {
+                        anyhow::anyhow!("Failed to read resource file '{}': {}", resource.path, e)
+                    })?;
+                    let mime_type = mime_guess::from_path(path)
+                        .first_or_octet_stream()
+                        .essence_str()
+                        .to_string();
+
+                    self.log(&format!(
+                        "Successfully read {} bytes from file, mime-type: {}",
+                        content.len(),
+                        mime_type
+                    ))?;
+                    (content, mime_type)
+                };
+
+                let is_binary = !mime_type.starts_with("text/")
+                    && mime_type != "application/json"
+                    && mime_type != "application/xml";
+
+                self.log(&format!(
+                    "Resource '{}' processed successfully as {}",
+                    resource_name,
+                    if is_binary { "binary" } else { "text" }
+                ))?;
+
+                if is_binary {
+                    let encoded_content =
+                        base64::engine::general_purpose::STANDARD.encode(&content);
+                    json!({
+                        "contents": [{
+                            "uri": resource_uri,
+                            "mimeType": mime_type,
+                            "blob": encoded_content
+                        }]
+                    })
+                } else {
+                    let text_content = String::from_utf8_lossy(&content).to_string();
+                    json!({
+                        "contents": [{
+                            "uri": resource_uri,
+                            "mimeType": mime_type,
+                            "text": text_content
+                        }]
+                    })
+                }
+            }
             "initialize" => {
                 json!({
                     "protocolVersion": "2024-11-05",
                     "capabilities": {
                         "tools": {},
-                        "prompts": {}
+                        "prompts": {},
+                        "resources": {}
                     },
                     "serverInfo": {
                         "name": "mycommandmcp",
@@ -323,6 +460,10 @@ impl MyCommandMCPServer {
                 }
             }
 
+            "resources/templates/list" => {
+                // Return empty templates list since we don't support templates
+                json!({ "resourceTemplates": [] })
+            }
             _ => {
                 return Ok(json!({
                     "jsonrpc": "2.0",

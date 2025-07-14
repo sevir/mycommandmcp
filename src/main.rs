@@ -26,9 +26,10 @@ async fn main() -> Result<()> {
     server.log("MyCommandMCP Server starting...")?;
     server.log(&format!("Config file: {config_path}"))?;
     server.log(&format!(
-        "Loaded {} tools and {} prompts:",
+        "Loaded {} tools, {} prompts, and {} resources:",
         server.tools.len(),
-        server.prompts.len()
+        server.prompts.len(),
+        server.resources.len()
     ))?;
 
     // Print available tools for debugging
@@ -46,9 +47,18 @@ async fn main() -> Result<()> {
     }
 
     // Print available prompts for debugging
-    server.log("\nPrompts:")?;
+    server.log("Prompts:")?;
     for prompt in server.prompts.values() {
         server.log(&format!("  - {}: {}", prompt.name, prompt.description))?;
+    }
+
+    // Print available resources for debugging
+    server.log("Resources:")?;
+    for resource in server.resources.values() {
+        server.log(&format!(
+            "  - {}: {} (path: {})",
+            resource.name, resource.description, resource.path
+        ))?;
     }
 
     let stdin = tokio::io::stdin();
@@ -75,10 +85,14 @@ async fn main() -> Result<()> {
 
                 match server.handle_request(line).await {
                     Ok(response) => {
-                        server.log(&format!("Sending response: {response}"))?;
-                        stdout.write_all(response.as_bytes()).await?;
-                        stdout.write_all(b"\n").await?;
-                        stdout.flush().await?;
+                        if !response.is_empty() {
+                            server.log(&format!("Sending response: {response}"))?;
+                            stdout.write_all(response.as_bytes()).await?;
+                            stdout.write_all(b"\n").await?;
+                            stdout.flush().await?;
+                        } else {
+                            server.log("No response needed (notification handled)")?;
+                        }
                     }
                     Err(e) => {
                         server.log(&format!("Failed to handle request: {e}"))?;

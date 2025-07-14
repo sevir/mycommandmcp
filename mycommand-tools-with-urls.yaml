@@ -1,0 +1,53 @@
+# Tool configuration file for MyCommandMCP with URL resources
+# This file demonstrates URL support for resources
+
+prompts:
+  - name: "summarize"
+    description: "Summarize a given text"
+    content: |
+      Please summarize the following text in 3 sentences or less.
+      Consider the main points and key details.
+      Maintain a clear and concise style.
+
+tools:
+  - name: "list_files"
+    description: "Lists files and directories in a specific location"
+    command: "ls"
+    path: "/"
+    accepts_args: true
+    accept_input: false
+    default_args: "-l --color=never"
+    
+  - name: "get_date"
+    description: "Gets the current system date and time"
+    command: "date"
+    path: "/"
+    accepts_args: false
+    accept_input: false
+
+resources:
+  # Local file resources
+  - name: "local_sample"
+    description: "A local sample text file"
+    path: "/tmp/sample.txt"
+  
+  # URL resources - these will be fetched from the internet
+  - name: "example_webpage"
+    description: "Example webpage content"
+    path: "https://httpbin.org/html"
+  
+  - name: "sample_json"
+    description: "Sample JSON data from httpbin"
+    path: "https://httpbin.org/json"
+  
+  - name: "sample_image"
+    description: "Sample image from the internet"
+    path: "https://httpbin.org/image/png"
+  
+  - name: "github_readme"
+    description: "A sample README file from GitHub"
+    path: "https://raw.githubusercontent.com/octocat/Hello-World/master/README"
+  
+  - name: "rss_feed"
+    description: "BBC RSS news feed"
+    path: "https://feeds.bbci.co.uk/news/rss.xml"

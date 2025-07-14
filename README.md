@@ -45,7 +45,7 @@ The server reads configuration from a YAML file. By default it looks for `mycomm
 
 ### Configuration file structure
 
-The configuration file supports two main sections: `prompts` and `tools`.
+The configuration file supports three main sections: `prompts`, `tools`, and `resources`.
 
 ```yaml
 prompts:
@@ -66,6 +66,8 @@ tools:
     default_args: "default arguments string"
     content_type: "mime/type"              # Optional: MIME type for file responses
     content_disposition: "attachment; filename=file.ext"  # Optional: Content disposition
+  - **resources**: List of MCP resources to serve files directly by name
+
 ```
 
 #### Configuration attributes explained:
@@ -79,6 +81,33 @@ tools:
 - **default_args**: (Optional) Default arguments always applied to the command, concatenated before any additional arguments
 - **content_type**: (Optional) MIME type of the command output (e.g., "application/pdf", "image/png", "text/csv")
 - **content_disposition**: (Optional) How the content should be handled (e.g., "attachment; filename=report.pdf", "inline")
+
+### Resources section
+
+The `resources` section allows you to define named MCP resources that serve files directly. Each resource must specify:
+
+- **name**: Unique identifier for the resource
+- **description**: Human-readable description
+- **path**: Path to the file to be served
+
+If the file is binary, the server will automatically detect the correct content-type and return the file as base64-encoded data.
+
+#### Example resources section
+
+```yaml
+resources:
+  - name: "sample_text"
+    description: "Returns the content of a sample text file"
+    path: "/tmp/sample.txt"
+
+  - name: "sample_pdf"
+    description: "Returns a sample PDF file"
+    path: "/tmp/sample.pdf"
+
+  - name: "sample_image"
+    description: "Returns a sample PNG image"
+    path: "/tmp/sample.png"
+```
 
 ### Configuration example
 
@@ -189,6 +218,19 @@ tools:
 - **File Response**: Content includes proper MIME type and disposition headers for file handling
 
 For detailed documentation, see [CONTENT_TYPES.md](CONTENT_TYPES.md).
+
+## MCP Resource API
+
+- `resources/list`: Lists all available resources with their names and descriptions
+- `resources/get`: Retrieves the content of a specific resource by name
+
+Example MCP resource call:
+
+```json
+{"jsonrpc": "2.0", "id": 10, "method": "resources/get", "params": {"name": "sample_pdf"}}
+```
+
+The server will return the file content with the correct MIME type and encoding.
 
 ## Included configuration files
 

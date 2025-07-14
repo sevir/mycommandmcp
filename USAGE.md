@@ -80,7 +80,36 @@ echo '{"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "li
   - current_directory, memory_info, network_interfaces, ping_host
   - file_content, file_info, find_files, grep_text
 
-## 🔧 Customize tools
+## 🔧 Customize configuration
+
+You can define tools, prompts, and resources in your YAML configuration file.
+
+### Resources section
+
+The `resources` section allows you to expose files as MCP resources. Each resource entry must include:
+
+- **name**: Unique resource identifier
+- **description**: Description of the resource
+- **path**: Path to the file to be served
+
+If the file is binary, the server will automatically detect the MIME type and encode the content as base64.
+
+#### Example resources section
+
+```yaml
+resources:
+  - name: "sample_text"
+    description: "Returns the content of a sample text file"
+    path: "/tmp/sample.txt"
+
+  - name: "sample_pdf"
+    description: "Returns a sample PDF file"
+    path: "/tmp/sample.pdf"
+
+  - name: "sample_image"
+    description: "Returns a sample PNG image"
+    path: "/tmp/sample.png"
+```
 
 Edit any YAML file or create a new one:
 
@@ -156,6 +185,19 @@ Each tool execution returns:
 - Only use in controlled environments
 - Carefully review configured tools
 - Commands are executed with the permissions of the user running the server
+
+## MCP Resource API
+
+- `resources/list`: Lists all available resources
+- `resources/get`: Retrieves the content of a resource by name
+
+Example:
+
+```json
+{"jsonrpc": "2.0", "id": 10, "method": "resources/get", "params": {"name": "sample_image"}}
+```
+
+The server will return the file content with the correct MIME type and encoding.
 
 ## 📁 Project structure
 

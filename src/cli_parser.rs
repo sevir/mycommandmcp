@@ -25,6 +25,12 @@ pub struct PromptConfig {
     pub description: String,
     pub content: String,
 }
+#[derive(Debug, Deserialize, Clone)]
+pub struct ResourceConfig {
+    pub name: String,
+    pub description: String,
+    pub path: String,
+}
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct ToolConfig {
@@ -47,11 +53,14 @@ pub struct ToolsConfig {
     pub tools: Vec<ToolConfig>,
     #[serde(default)]
     pub prompts: Vec<PromptConfig>,
+    #[serde(default)]
+    pub resources: Vec<ResourceConfig>,
 }
 
 pub struct ConfigData {
     pub tools: HashMap<String, ToolConfig>,
     pub prompts: HashMap<String, PromptConfig>,
+    pub resources: HashMap<String, ResourceConfig>,
 }
 
 /// Find the configuration file in the appropriate location based on the OS
@@ -117,5 +126,20 @@ pub fn load_config(config_path: &str) -> Result<ConfigData> {
         prompts.insert(prompt.name.clone(), prompt);
     }
 
-    Ok(ConfigData { tools, prompts })
+    let mut resources = HashMap::new();
+    for resource in config.resources {
+        if resources.contains_key(&resource.name) {
+            return Err(anyhow::anyhow!(
+                "Duplicate resource name: {}",
+                resource.name
+            ));
+        }
+        resources.insert(resource.name.clone(), resource);
+    }
+
+    Ok(ConfigData {
+        tools,
+        prompts,
+        resources,
+    })
 }
