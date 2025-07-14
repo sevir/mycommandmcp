@@ -46,7 +46,7 @@ impl MyCommandMCPServer {
         let tool = self
             .tools
             .get(tool_name)
-            .context(format!("Tool '{}' not found", tool_name))?;
+            .context(format!("Tool '{tool_name}' not found"))?;
 
         let mut cmd = Command::new(&tool.command);
         cmd.current_dir(&tool.path);
@@ -302,7 +302,13 @@ impl MyCommandMCPServer {
                     json!({
                         "name": prompt.name,
                         "description": prompt.description,
-                        "content": prompt.content
+                        "messages": [{
+                            "role": "user",
+                            "content": {
+                                "type": "text",
+                                "text": prompt.content
+                            }
+                        }]
                     })
                 } else {
                     return Ok(json!({

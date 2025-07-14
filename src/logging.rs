@@ -13,7 +13,6 @@ impl DualLogger {
             let file = OpenOptions::new()
                 .create(true)
                 .append(true)
-                .write(true)
                 .open(Path::new(path))?;
             Some(Mutex::new(file))
         } else {
@@ -28,15 +27,15 @@ impl DualLogger {
         // Get current date and time
         let now = Local::now();
         let timestamp = now.format("%Y-%m-%d %H:%M:%S");
-        let formatted_message = format!("[{}] {}", timestamp, message);
+        let formatted_message = format!("[{timestamp}] {message}");
 
         // Write to terminal
-        eprintln!("{}", formatted_message);
+        eprintln!("{formatted_message}");
 
         // Write to file if configured
         if let Some(file) = &self.log_file {
             let mut file = file.lock().unwrap();
-            writeln!(file, "{}", formatted_message)?;
+            writeln!(file, "{formatted_message}")?;
             file.flush()?;
         }
 

@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
     let server = MyCommandMCPServer::new(config, logger);
 
     server.log("MyCommandMCP Server starting...")?;
-    server.log(&format!("Config file: {}", config_path))?;
+    server.log(&format!("Config file: {config_path}"))?;
     server.log(&format!(
         "Loaded {} tools and {} prompts:",
         server.tools.len(),
@@ -71,17 +71,17 @@ async fn main() -> Result<()> {
                     continue;
                 }
 
-                server.log(&format!("Received input: {}", line))?;
+                server.log(&format!("Received input: {line}"))?;
 
                 match server.handle_request(line).await {
                     Ok(response) => {
-                        server.log(&format!("Sending response: {}", response))?;
+                        server.log(&format!("Sending response: {response}"))?;
                         stdout.write_all(response.as_bytes()).await?;
                         stdout.write_all(b"\n").await?;
                         stdout.flush().await?;
                     }
                     Err(e) => {
-                        server.log(&format!("Failed to handle request: {}", e))?;
+                        server.log(&format!("Failed to handle request: {e}"))?;
                         let error_response = json!({
                             "jsonrpc": "2.0",
                             "id": null,
@@ -98,7 +98,7 @@ async fn main() -> Result<()> {
                 }
             }
             Err(e) => {
-                server.log(&format!("Error reading from stdin: {}", e))?;
+                server.log(&format!("Error reading from stdin: {e}"))?;
                 break;
             }
         }

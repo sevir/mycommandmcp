@@ -281,6 +281,30 @@ This task are automatic scripts to help manage the project
 
 Generate release with goreleaser
 
+interactive: true
+
 ```
 goreleaser release --snapshot
+```
+
+### check
+
+Check code with clippy and fmt
+
+interactive: true
+
+```
+cargo check
+cargo clippy
+cargo fmt
+```
+
+### build
+
+Build the project
+
+interactive: true
+
+```
+cargo build --release
 ```

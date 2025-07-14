@@ -98,7 +98,7 @@ pub fn find_config_file(explicit_path: Option<String>) -> Result<String> {
 /// Load and parse the configuration file
 pub fn load_config(config_path: &str) -> Result<ConfigData> {
     let config_content = fs::read_to_string(config_path)
-        .context(format!("Failed to read config file: {}", config_path))?;
+        .context(format!("Failed to read config file: {config_path}"))?;
 
     let config: ToolsConfig =
         serde_yaml::from_str(&config_content).context("Failed to parse YAML configuration")?;
