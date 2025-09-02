@@ -377,7 +377,9 @@ Generate release with goreleaser
 interactive: true
 
 ```
-goreleaser release --snapshot
+# goreleaser release --snapshot
+cargo build --release
+bash build-windows.sh
 ```
 
 ### check
