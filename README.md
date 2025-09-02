@@ -160,6 +160,90 @@ prompts:
 
 If loading from a file or URL fails, the server will return an error for that specific prompt request.
 
+## External Configuration Files
+
+MyCommandMCP supports loading additional configuration from external YAML files, allowing you to organize your tools, prompts, and resources across multiple files or fetch them from remote URLs.
+
+### External Configuration Sections
+
+You can include an optional `external_configs` section in your main configuration file to load additional configuration from external YAML files:
+
+```yaml
+# Main configuration file
+tools:
+  - name: "local_tool"
+    description: "A tool defined in the main config"
+    command: "echo"
+    path: "/"
+    accepts_args: true
+    accept_input: false
+
+external_configs:
+  - "/path/to/external/config.yaml"
+  - "https://example.com/remote/config.yaml"
+```
+
+### External File Structure
+
+External configuration files have the same structure as the main configuration file. They can contain any combination of `tools`, `prompts`, and `resources` sections:
+
+```yaml
+# /path/to/external/tools.yaml
+tools:
+  - name: "external_tool"
+    description: "A tool from an external file"
+    command: "ls"
+    path: "/"
+    accepts_args: true
+    accept_input: false
+
+prompts:
+  - name: "external_prompt"
+    description: "A prompt from an external file"
+    content: "This is a prompt template from an external file"
+```
+
+### Loading Behavior
+
+- **File Paths**: Relative paths are resolved relative to the main configuration file's directory
+- **URLs**: Remote files are fetched at startup and cached in memory
+- **Merging**: All configurations are merged together, with duplicate names causing an error
+- **Validation**: Each external file is validated for correct YAML syntax and required fields
+
+### Migration from Previous Versions
+
+If you were using the separate `tools_list`, `prompts_list`, and `resources_list` options, you can migrate to the unified `external_configs` option by combining all your external file references into a single list:
+
+```yaml
+# Old format (deprecated)
+tools_list:
+  - "/path/to/tools.yaml"
+prompts_list:
+  - "/path/to/prompts.yaml"
+resources_list:
+  - "/path/to/resources.yaml"
+
+# New unified format
+external_configs:
+  - "/path/to/tools.yaml"
+  - "/path/to/prompts.yaml"
+  - "/path/to/resources.yaml"
+```
+- **Order**: External configurations are loaded in the order they appear in the lists
+
+### Use Cases
+
+- **Modular Configuration**: Split large configurations into logical modules
+- **Team Collaboration**: Share common tools/prompts across team members via shared files
+- **Remote Management**: Update configurations remotely without redeploying the server
+- **Version Control**: Keep different sets of tools in separate repositories
+
+### Error Handling
+
+If an external file cannot be loaded (file not found, network error, invalid YAML), the server will fail to start with a descriptive error message. This ensures that all configurations are valid before the server begins accepting requests.
+
+## Content Types and File Downloads
+
 ### Configuration example
 
 ```yaml

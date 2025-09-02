@@ -99,11 +99,14 @@ pub struct ToolConfig {
 
 #[derive(Debug, Deserialize)]
 pub struct ToolsConfig {
+    #[serde(default)]
     pub tools: Vec<ToolConfig>,
     #[serde(default)]
     pub prompts: Vec<PromptConfig>,
     #[serde(default)]
     pub resources: Vec<ResourceConfig>,
+    #[serde(default)]
+    pub external_configs: Vec<String>,
 }
 
 pub struct ConfigData {
@@ -153,16 +156,59 @@ pub fn find_config_file(explicit_path: Option<String>) -> Result<String> {
     Ok(CONFIG_FILENAME.to_string())
 }
 
+/// Load and parse an external configuration file from path or URL
+fn load_external_config(source: &str) -> Result<ToolsConfig> {
+    let content = if source.starts_with("http://") || source.starts_with("https://") {
+        // Load from URL
+        let response = get(source).context(format!("Failed to fetch URL: {}", source))?;
+        if !response.status().is_success() {
+            return Err(anyhow::anyhow!(
+                "HTTP error {} when fetching URL: {}",
+                response.status(),
+                source
+            ));
+        }
+        response
+            .text()
+            .context(format!("Failed to read response body from URL: {}", source))?
+    } else {
+        // Load from file
+        fs::read_to_string(source).context(format!("Failed to read config file: {}", source))?
+    };
+
+    let config: ToolsConfig =
+        serde_yaml::from_str(&content).context(format!("Failed to parse YAML from {}", source))?;
+
+    Ok(config)
+}
+
 /// Load and parse the configuration file
 pub fn load_config(config_path: &str) -> Result<ConfigData> {
     let config_content = fs::read_to_string(config_path)
         .context(format!("Failed to read config file: {config_path}"))?;
 
-    let config: ToolsConfig =
+    let mut config: ToolsConfig =
         serde_yaml::from_str(&config_content).context("Failed to parse YAML configuration")?;
+
+    // Keep track of loaded external files to avoid duplicates
+    let mut loaded_files = std::collections::HashSet::new();
+
+    // Load external configurations and merge them
+    for source in &config.external_configs {
+        if !loaded_files.contains(source) {
+            let external = load_external_config(source)?;
+            config.tools.extend(external.tools);
+            config.prompts.extend(external.prompts);
+            config.resources.extend(external.resources);
+            loaded_files.insert(source.clone());
+        }
+    }
 
     let mut tools = HashMap::new();
     for tool in config.tools {
+        if tools.contains_key(&tool.name) {
+            return Err(anyhow::anyhow!("Duplicate tool name: {}", tool.name));
+        }
         tools.insert(tool.name.clone(), tool);
     }
 

@@ -211,3 +211,9 @@ resources:
   - name: "github_readme"
     description: "Sample README from GitHub"
     path: "https://raw.githubusercontent.com/octocat/Hello-World/master/README"
+
+# External configuration files (optional)
+# This section allows loading additional tools, prompts, and resources from external files or URLs
+external_configs:
+  # - "/path/to/external/config.yaml"        # Local file example
+  # - "https://example.com/remote/config.yaml"     # Remote URL example
