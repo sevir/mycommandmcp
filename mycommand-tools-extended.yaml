@@ -16,6 +16,14 @@ prompts:
       Preserve the original meaning and tone.
       Use natural and fluent Spanish language.
 
+  - name: "code_review"
+    description: "Review code for best practices"
+    path: "/www/MCP/mycommandmcp/test_code_review.md"
+
+  - name: "documentation"
+    description: "Generate documentation from code"
+    url: "https://raw.githubusercontent.com/octocat/Hello-World/master/README"
+
 tools:
   # Basic system tools
   - name: "list_files"

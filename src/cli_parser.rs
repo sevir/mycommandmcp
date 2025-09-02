@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use clap::Parser;
+use reqwest::blocking::get;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs;
@@ -23,8 +24,56 @@ pub struct Args {
 pub struct PromptConfig {
     pub name: String,
     pub description: String,
-    pub content: String,
+    #[serde(default)]
+    pub content: Option<String>,
+    #[serde(default)]
+    pub path: Option<String>,
+    #[serde(default)]
+    pub url: Option<String>,
 }
+
+impl PromptConfig {
+    /// Load the content for this prompt, either from inline content, file, or URL
+    pub fn load_content(&self) -> Result<String> {
+        if let Some(content) = &self.content {
+            return Ok(content.clone());
+        }
+
+        if let Some(path) = &self.path {
+            return fs::read_to_string(path)
+                .context(format!("Failed to read prompt file: {}", path));
+        }
+
+        if let Some(url) = &self.url {
+            return Self::load_from_url(url);
+        }
+
+        Err(anyhow::anyhow!(
+            "No content, path, or url specified for prompt: {}",
+            self.name
+        ))
+    }
+
+    /// Load content from a URL
+    fn load_from_url(url: &str) -> Result<String> {
+        let response = get(url).context(format!("Failed to fetch URL: {}", url))?;
+
+        if !response.status().is_success() {
+            return Err(anyhow::anyhow!(
+                "HTTP error {} when fetching URL: {}",
+                response.status(),
+                url
+            ));
+        }
+
+        let content = response
+            .text()
+            .context(format!("Failed to read response body from URL: {}", url))?;
+
+        Ok(content)
+    }
+}
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct ResourceConfig {
     pub name: String,
@@ -123,6 +172,33 @@ pub fn load_config(config_path: &str) -> Result<ConfigData> {
         if prompts.contains_key(&prompt.name) {
             return Err(anyhow::anyhow!("Duplicate prompt name: {}", prompt.name));
         }
+
+        // Validate that at least one content source is provided
+        let has_content = prompt.content.is_some();
+        let has_path = prompt.path.is_some();
+        let has_url = prompt.url.is_some();
+
+        if !has_content && !has_path && !has_url {
+            return Err(anyhow::anyhow!(
+                "Prompt '{}' must have either 'content', 'path', or 'url' specified",
+                prompt.name
+            ));
+        }
+
+        if has_content && (has_path || has_url) {
+            return Err(anyhow::anyhow!(
+                "Prompt '{}' cannot have both 'content' and 'path'/'url' specified",
+                prompt.name
+            ));
+        }
+
+        if has_path && has_url {
+            return Err(anyhow::anyhow!(
+                "Prompt '{}' cannot have both 'path' and 'url' specified",
+                prompt.name
+            ));
+        }
+
         prompts.insert(prompt.name.clone(), prompt);
     }
 

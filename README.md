@@ -56,6 +56,16 @@ prompts:
       Can contain instructions and formatting
       Supports multiple lines with proper indentation
 
+  # Alternative: Load content from a local file
+  - name: "file_prompt"
+    description: "Prompt loaded from a markdown file"
+    path: "/path/to/prompt.md"
+
+  # Alternative: Load content from a URL
+  - name: "url_prompt"
+    description: "Prompt loaded from a remote URL"
+    url: "https://example.com/prompt.md"
+
 tools:
   - name: "tool_name"
     description: "Tool description for MCP"
@@ -108,6 +118,47 @@ resources:
     description: "Returns a sample PNG image"
     path: "/tmp/sample.png"
 ```
+
+### Prompts Configuration
+
+The `prompts` section allows you to define reusable prompt templates. Each prompt must specify:
+
+- **name**: Unique identifier for the prompt
+- **description**: Human-readable description shown in MCP
+
+And exactly one of the following content sources:
+
+- **content**: Inline prompt content as a string (supports multi-line with `|` YAML syntax)
+- **path**: Path to a local file containing the prompt content (supports markdown files)
+- **url**: URL to fetch the prompt content from (supports remote markdown files)
+
+#### Example prompts section
+
+```yaml
+prompts:
+  - name: "summarize"
+    description: "Summarize a given text"
+    content: |
+      Please summarize the following text in 3 sentences or less.
+      Consider the main points and key details.
+      Maintain a clear and concise style.
+
+  - name: "code_review"
+    description: "Review code for best practices"
+    path: "/home/user/prompts/code_review.md"
+
+  - name: "translate"
+    description: "Translate text to Spanish"
+    url: "https://raw.githubusercontent.com/example/repo/main/prompts/translate.md"
+```
+
+#### Content Loading Behavior
+
+- **Inline content**: Loaded directly from the YAML configuration
+- **File path**: Content is read from the local file system when the prompt is requested
+- **URL**: Content is fetched from the remote URL when the prompt is requested
+
+If loading from a file or URL fails, the server will return an error for that specific prompt request.
 
 ### Configuration example
 

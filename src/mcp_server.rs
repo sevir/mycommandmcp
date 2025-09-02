@@ -436,17 +436,34 @@ impl MyCommandMCPServer {
                     .context("Missing prompt name in request")?;
 
                 if let Some(prompt) = self.prompts.get(prompt_name) {
-                    json!({
-                        "name": prompt.name,
-                        "description": prompt.description,
-                        "messages": [{
-                            "role": "user",
-                            "content": {
-                                "type": "text",
-                                "text": prompt.content
-                            }
-                        }]
-                    })
+                    match prompt.load_content() {
+                        Ok(content) => json!({
+                            "name": prompt.name,
+                            "description": prompt.description,
+                            "messages": [{
+                                "role": "user",
+                                "content": {
+                                    "type": "text",
+                                    "text": content
+                                }
+                            }]
+                        }),
+                        Err(e) => {
+                            self.log(&format!(
+                                "Failed to load prompt content for '{}': {}",
+                                prompt_name, e
+                            ))?;
+                            return Ok(json!({
+                                "jsonrpc": "2.0",
+                                "id": id,
+                                "error": {
+                                    "code": -32000,
+                                    "message": format!("Failed to load prompt content: {}", e)
+                                }
+                            })
+                            .to_string());
+                        }
+                    }
                 } else {
                     return Ok(json!({
                         "jsonrpc": "2.0",
