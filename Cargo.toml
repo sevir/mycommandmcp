@@ -3,6 +3,10 @@ edition = "2021"
 name = "mycommandmcp"
 version = "0.9.0"
 
+[[bin]]
+name = "mycommandmcp"
+path = "src/main.rs"
+
 [dependencies]
 anyhow = "1.0"
 async-trait = "0.1"

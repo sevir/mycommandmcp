@@ -487,3 +487,15 @@ interactive: true
 ```
 cargo build --release
 ```
+
+### docker:build-and-push
+
+Build and push docker image to Github Container Registry
+
+interactive: true
+
+```
+docker build -t ghcr.io/sevir/mycommandmcp:latest .
+docker push ghcr.io/sevir/mycommandmcp:latest
+cosign sign ghcr.io/sevir/mycommandmcp
+```
